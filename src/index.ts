@@ -38,6 +38,7 @@ export function startupApp() {
  * `/openmrs/spa/root`.
  */
 export const root = getAsyncLifecycle(() => import('./root.component'), options);
+export const testPage = getAsyncLifecycle(() => import('./page.component'), options);
 
 /**
  * The following are named exports for the extensions defined in this frontend modules. See the `routes.json` file to see how these are used.
