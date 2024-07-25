@@ -19,6 +19,29 @@
       "name": "Brand box",
       "component": "blueBox",
       "slot": "Boxes"
+    },
+    {
+      "name": "hivCareAndTreatment-details-widget",
+      "component": "hivCareAndTreatmentDetailedSummary",
+      "slot": "patient-chart-hivCareAndTreatment-dashboard-slot",
+      "online": true,
+      "offline": true,
+      "meta": {
+        "columnSpan": 4
+      }
+    },
+    {
+      "name": "hivCareAndTreatment-summary-dashboard",
+      "component": "hivCareAndTreatmentDashboardLink",
+      "slot": "patient-chart-dashboard-slot",
+      "online": true,
+      "offline": true,
+      "order": 6,
+      "meta": {
+        "columns": 1,
+        "slot": "patient-chart-hivCareAndTreatment-dashboard-slot",
+        "path": "hiv-care-and-treatment"
+      }
     }
   ],
   "pages": [
