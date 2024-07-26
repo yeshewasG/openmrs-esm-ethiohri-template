@@ -2,7 +2,7 @@ import { getAsyncLifecycle, defineConfigSchema, getSyncLifecycle } from '@openmr
 import { configSchema } from './config-schema';
 import { createDashboardLink } from '@openmrs/esm-patient-common-lib';
 import { dashboardMeta } from './dashboard.meta';
-import HivCareAndTreatmentSummary from './components/hiv-care-and-treatment.component';
+import HivCareAndTreatmentSummary from './careAndTreatment/hiv-care-and-treatment.component';
 
 const moduleName = '@openmrs/esm-ethio-hiv';
 
@@ -18,9 +18,8 @@ export function startupApp() {
   defineConfigSchema(moduleName, configSchema);
 }
 
-
 export const root = getAsyncLifecycle(() => import('./root.component'), options);
-export const testPage = getAsyncLifecycle(() => import('./page.component'), options);
+export const testPage = getAsyncLifecycle(() => import('./forms/test-form.component'), options);
 
 export const hivCareAndTreatmentDetailedSummary = getSyncLifecycle(HivCareAndTreatmentSummary, options);
 
@@ -32,5 +31,9 @@ export const hivCareAndTreatmentDashboardLink = getSyncLifecycle(
     ...dashboardMeta,
     moduleName,
   }),
+  options,
+);
+export const hivCareAndTreatmentFormWorkspace = getAsyncLifecycle(
+  () => import('./forms/test-form.component'),
   options,
 );

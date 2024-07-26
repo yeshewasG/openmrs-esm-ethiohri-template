@@ -7,14 +7,16 @@ import { CardHeader, EmptyState, ErrorState, launchPatientWorkspace } from '@ope
 import { useTranslation } from "react-i18next";
 import styles from './hiv-care-and-treatment.scss'
 import { useEncounters } from './care-and-treatment.resource';
+import { hivCareAndTreatmentFormWorkspace } from '../constants';
 
 interface HivCareAndTreatmentProps {
     patientUuid: string;
   }
   
   const HivCareAndTreatmentSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) => {
+    console.log(patientUuid);
     const { t } = useTranslation();
-    const encounterTypeUuid = '';
+    const encounterTypeUuid = 'f1b397c1-46bd-43e6-a23d-ae2cedaec881';
     const displayText = t('hivCare', 'HIV Care And Treatment Encounter');
     const headerTitle = t('hivCareAndTreatment', 'HIV Care & Treatment');
     const { encounters, isError, isLoading, isValidating } = useEncounters(patientUuid, encounterTypeUuid);
@@ -23,7 +25,7 @@ interface HivCareAndTreatmentProps {
     const isTablet = layout === 'tablet';
     const isDesktop = layout === 'small-desktop' || layout === 'large-desktop';
 
-    const launchHivCareAndTreatmentForm = useCallback(() => launchPatientWorkspace(''), []);
+    const launchHivCareAndTreatmentForm = useCallback(() => launchPatientWorkspace(hivCareAndTreatmentFormWorkspace), []);
 
     const tableHeaders = [
         { key: 'visitDate', header: t('visitDate', 'Visit Date') },
@@ -88,7 +90,7 @@ interface HivCareAndTreatmentProps {
     //                         <TableCell className="cds--table-column-menu">
     //                           {/* <FormActionMenu
     //                             patientUuid={patientUuid}
-    //                             encounter={careAndTreatmentEncounters.find((allergy) => allergy.id == row.id)}
+    //                             encounter={encoounters.find((encounter) => encounter.id == row.id)}
     //                           /> */}
     //                         </TableCell>
     //                       </TableRow>

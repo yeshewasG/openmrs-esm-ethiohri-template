@@ -53,5 +53,14 @@
       "component": "testPage",
       "route": "testpage"
     }
+  ],
+  "workspaces": [
+    {
+      "name": "hiv-care-and-treatment-form-workspace",
+      "title": "New PHDP Encounter",
+      "component": "hivCareAndTreatmentFormWorkspace",
+      "type": "form",
+      "canMaximize": true
+    }
   ]
 }
