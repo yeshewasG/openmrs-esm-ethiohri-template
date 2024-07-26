@@ -42,6 +42,10 @@
         "slot": "patient-chart-hivCareAndTreatment-dashboard-slot",
         "path": "hiv-care-and-treatment"
       }
+    },
+    {
+      "name": "encounter-delete-confirmation-dialog",
+      "component": "encounterDeleteConfirmationDialog"
     }
   ],
   "pages": [
@@ -60,7 +64,8 @@
       "title": "New PHDP Encounter",
       "component": "hivCareAndTreatmentFormWorkspace",
       "type": "form",
-      "canMaximize": true
+      "canMaximize": true,
+      "canHide": true
     }
   ]
 }

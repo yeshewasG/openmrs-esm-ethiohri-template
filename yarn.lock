@@ -1827,6 +1827,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": "npm:^7.8.0"
     "@typescript-eslint/parser": "npm:^7.8.0"
     css-loader: "npm:^6.8.1"
+    dayjs: "npm:^1.11.10"
     dotenv: "npm:^16.0.3"
     eslint: "npm:^8.50.0"
     eslint-config-prettier: "npm:^8.8.0"
@@ -8130,6 +8131,13 @@ __metadata:
   version: 1.11.4
   resolution: "dayjs@npm:1.11.4"
   checksum: 10/4ac85703ce30ffb84bbc809132896812baf09acb383eed1e6708a30d86c08eae6c16a6e5d92be29870c3e452930d67d6f44377dfe76d19fbacb8dbf04c3c4fff
+  languageName: node
+  linkType: hard
+
+"dayjs@npm:^1.11.10":
+  version: 1.11.12
+  resolution: "dayjs@npm:1.11.12"
+  checksum: 10/8ee7c1e14961fd08d40b788d0c0e930dc6288b3d32911bb911b2fb31bb703c262788164fbe678ee9e50e2a35268d667b8c8ba43fd1806771c1f404c300a2b428
   languageName: node
   linkType: hard
 
