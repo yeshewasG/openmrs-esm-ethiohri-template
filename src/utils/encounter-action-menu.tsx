@@ -4,8 +4,8 @@ import { Layer, OverflowMenu, OverflowMenuItem } from '@carbon/react';
 import { launchPatientWorkspace } from '@openmrs/esm-patient-common-lib';
 import { showModal, useLayoutType } from '@openmrs/esm-framework';
 import styles from './encounter-action-menu.scss';
-import { hivCareAndTreatmentFormWorkspace } from '../constants';
 import { type OpenmrsEncounter } from '../types';
+import { transferOutWorkspace } from '../constants';
 
 interface encounterActionMenuProps {
   encounter: OpenmrsEncounter;
@@ -17,7 +17,7 @@ export const EncounterActionMenu = ({ encounter, patientUuid }: encounterActionM
   const isTablet = useLayoutType() === 'tablet';
 
   const launchEditEncounterForm = useCallback(() => {
-    launchPatientWorkspace(hivCareAndTreatmentFormWorkspace, {
+    launchPatientWorkspace(transferOutWorkspace, {
       workspaceTitle: t('editEncounter', 'Edit Encounter'),
       encounter,
       formContext: 'editing',
