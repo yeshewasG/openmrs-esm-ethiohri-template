@@ -61,7 +61,7 @@
       "component": "transferOutWorkspace",
       "type": "form",
       "canMaximize": true,
-      "canHide": true
+      "canHide": false
     }
   ]
 }

@@ -14,3 +14,19 @@ export function saveEncounter(abortController: AbortController, payload, encount
     signal: abortController.signal,
   });
 }
+
+export function fetchLocation() {
+  return openmrsFetch(`${restBaseUrl}/location?q=&v=default`);
+}
+
+export async function getPatientInfo(patientUuid: string) {
+  try {
+    const response = await openmrsFetch(`${restBaseUrl}/patient/${patientUuid}?v=full`);
+    const data = await response.data;
+
+    return data;
+  } catch (error) {
+    console.error('Error fetching patient emergency contact:', error);
+    return null;
+  }
+}

@@ -11,3 +11,6 @@ export const phdpConcepts = {
 
 export const transferOutWorkspace = 'transfer-out-workspace';
 export const phdpEncounterTypeUuid = 'f1b397c1-46bd-43e6-a23d-ae2cedaec881';
+
+export const TRANSFEROUT_ENCOUNTER_TYPE_UUID = 'd617892c-4154-4e51-9418-8c6e7a654dd9';
+export const TRANSFEROUT_FORM_UUID = '10c8c272-45e3-4efc-a39b-493dd541ee78';

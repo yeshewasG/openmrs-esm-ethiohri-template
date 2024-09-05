@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from '../root.scss';
-import { ResponsiveWrapper, closeWorkspace } from '@openmrs/esm-framework';
+import { OpenmrsDatePicker, ResponsiveWrapper, closeWorkspace } from '@openmrs/esm-framework';
 import { Form } from '@carbon/react';
 import { Controller, useForm } from 'react-hook-form';
 import { Select, SelectItem, Toggle, Stack } from '@carbon/react';
@@ -12,13 +12,17 @@ import { Text } from '@carbon/react/lib/components/Text';
 import { TextInput } from '@carbon/react';
 import { ButtonSet } from '@carbon/react';
 import { Button } from '@carbon/react';
-import { saveEncounter } from '../api/api';
+import { fetchLocation, getPatientInfo, saveEncounter } from '../api/api';
+import { TRANSFEROUT_ENCOUNTER_TYPE_UUID, TRANSFEROUT_FORM_UUID } from '../constants';
 
 type FormInputs = {
-  //   location: string;
-  //   testInput: string;
-  appointmentNote: string;
-  appointmentDateTime: Date;
+  transferredFrom: string;
+  transferredTo: string;
+  name: string;
+  mrn: string;
+  artStarted: string;
+  originalFirstLineRegimenDose: string;
+  dateOfTransfer: Date;
 };
 
 interface TransferOutFormProps {
@@ -27,50 +31,76 @@ interface TransferOutFormProps {
 
 const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
   const { t } = useTranslation();
-
   const onError = (error) => console.error(error);
+  const { control, handleSubmit, setValue } = useForm<FormInputs>();
+  const [facilityLocationUUID, setFacilityLocationUUID] = useState('');
+  const [facilityLocationName, setFacilityLocationName] = useState('');
 
-  const { control, handleSubmit } = useForm<FormInputs>();
+  // const encounterDatetime = '2024-07-24T11:57:37.991Z';
+  console.log(new Date(new Date().toString().split('GMT')[0] + ' UTC').toISOString());
 
-  const encounterDatetime = '2024-07-24T11:57:37.991Z';
+  const encounterDatetime = new Date(new Date().toString().split('GMT')[0] + ' UTC').toISOString();
   const encounterProviders = [
     { provider: 'caa66686-bde7-4341-a330-91b7ad0ade07', encounterRole: 'a0b03050-c99b-11e0-9572-0800200c9a66' },
   ];
-  const encounterType = 'f1b397c1-46bd-43e6-a23d-ae2cedaec881';
-  const form = { uuid: 'e270770f-19bf-3d32-baaf-4b677983dec3' };
-  const location = '44c3efb0-2583-4c80-a79e-1f756a03c0a1';
-  const patient = '104f9000-8391-4715-b3c2-13c6d8604da1';
+  const encounterType = TRANSFEROUT_ENCOUNTER_TYPE_UUID;
+  const form = { uuid: TRANSFEROUT_FORM_UUID };
+  const location = facilityLocationUUID;
+  const patient = patientUuid;
   const orders = [];
 
   const [pickedDate, setPickedDate] = useState<Date | null>(null); // Added state for pickedDate
 
+  useEffect(() => {
+    (async function () {
+      const facilityInformation = await fetchLocation();
+      facilityInformation.data.results.forEach((element) => {
+        if (element.tags.some((x) => x.display === 'Facility Location')) {
+          setFacilityLocationUUID(element.uuid);
+          setFacilityLocationName(element.display);
+        }
+      });
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async function () {
+      const patientInfo = await getPatientInfo(patientUuid);
+      const { givenName, middleName, familyName } = patientInfo.person?.preferredName;
+      const mrn = patientInfo?.identifiers?.find((e) => e.identifierType?.display === 'MRN')?.identifier;
+      setValue('name', `${givenName} ${middleName} ${familyName}`);
+      setValue('mrn', mrn);
+    })();
+  }, []);
+
   const conceptObject = {
-    appointmentNote: '160632AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-    appointmentDateTime: '2c4db7e7-1ece-49a6-a075-d466e6d9b27d',
+    transfferedFrom: '161550AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    transferredTo: '2c30c599-1e4f-46f9-8488-5ab57cdc8ac3',
+    name: '1593AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    mrn: '9f760fe1-5cde-41ab-99b8-b8e1d77de902',
+    artStarted: '1149AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    originalFirstLineRegimenDose: '6d7d0327-e1f8-4246-bfe5-be1e82d94b14',
+    dateOfTransfer: '160649AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   };
 
-  const obs = [];
-
   const formatValue = (value) => {
-    console.log(value instanceof Object);
-
     return value instanceof Object
       ? new Date(value.startDate.getTime() - value.startDate?.getTimezoneOffset() * 60000).toISOString().slice(0, 10)
       : value;
   };
 
-  const handleFormSubmit = async (data: FormInputs) => {
-    Object.keys(data).forEach((key) => {
-      console.log(`${key}: ${typeof data[key]}`);
-      obs.push({
-        concept: conceptObject[key],
-        formFieldNamespace: 'rfe-forms',
-        formFieldPath: `rfe-forms-${key}`,
-        value: formatValue(data[key]),
-      });
+  const handleFormSubmit = async (fieldValues: FormInputs) => {
+    const obs = [];
+    Object.keys(fieldValues).forEach((key) => {
+      if (fieldValues[key]) {
+        obs.push({
+          concept: conceptObject[key],
+          formFieldNamespace: 'rfe-forms',
+          formFieldPath: `rfe-forms-${key}`,
+          value: formatValue(fieldValues[key]),
+        });
+      }
     });
-
-    console.log(obs);
 
     const payload = {
       encounterDatetime,
@@ -83,60 +113,65 @@ const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
       obs: obs,
     };
 
-    console.log(await saveEncounter(new AbortController(), payload));
-
+    await saveEncounter(new AbortController(), payload);
     return true;
-
-    // console.log(payload);
   };
 
   return (
     <div className={styles.container}>
-      <h3 className={styles.welcome}>{t('welcomeText', 'Test Form without using form-engine')}</h3>
-      <p className={styles.explainer}>{t('explainer', 'Sample encounter form')}.</p>
-      <p className={styles.explainer}>{patientUuid}.</p>
-
       <Form onSubmit={handleSubmit(handleFormSubmit, onError)}>
         <Stack gap={4}>
-          {/* <section className={styles.formGroup}>
-            <span className={styles.heading}>{t('location', 'Location')}</span>
+          <section className={styles.formGroup}>
             <ResponsiveWrapper>
-              <Controller
-                name="location"
-                control={control}
-                render={({ field: { onChange, value, onBlur, ref } }) => (
-                  <Select
-                    id="location"
-                    invalidText="Required"
-                    labelText={t('selectLocation', 'Select a location')}
-                    onChange={onChange}
-                    onBlur={onBlur}
-                    value={value}
-                    ref={ref}
-                  >
-                    <SelectItem text={t('chooseLocation', 'Choose a location')} value="" />
-
-                    <SelectItem key={1} text={'location 1'} value={1}>
-                      Location 1
-                    </SelectItem>
-                    <SelectItem key={2} text={'location 2'} value={2}>
-                      Location 2
-                    </SelectItem>
-                    <SelectItem key={3} text={'location 3'} value={3}>
-                      Location 3
-                    </SelectItem>
-                  </Select>
-                )}
+              <TextInput
+                id="transferredFrom"
+                value={facilityLocationName}
+                labelText="Transferred From"
+                placeholder="Facility Name"
+                helperText="Helper text"
               />
             </ResponsiveWrapper>
-          </section> */}
+          </section>
 
           <section className={styles.formGroup}>
             <ResponsiveWrapper>
               <Controller
-                name="appointmentDateTime"
+                name="transferredTo"
+                control={control}
+                render={({ field: { onChange, onBlur, value, ref } }) => (
+                  <TextInput
+                    id="transferredTo"
+                    value={value}
+                    labelText="Transferred To"
+                    placeholder="Facility Name"
+                    onChange={onChange}
+                    onBlur={onBlur}
+                    helperText="Helper text"
+                    ref={ref}
+                  />
+                )}
+              />
+            </ResponsiveWrapper>
+          </section>
+
+          <section className={styles.formGroup}>
+            <ResponsiveWrapper>
+              <Controller
+                name="dateOfTransfer"
                 control={control}
                 render={({ field: { onChange, value, ref } }) => (
+                  // <OpenmrsDatePicker
+                  //   id="datePickerInput"
+                  //   onChange={onChange}
+                  //   labelText="Date of Transfer"
+                  //   // isDisabled={question.isDisabled}
+                  //   // isReadOnly={isTrue(question.readonly)}
+                  //   // isRequired={question.isRequired ?? false}
+                  //   // isInvalid={errors.length > 0}
+                  //   // invalidText={errors[0]?.message}
+                  //   // value={field.value}
+                  // />
+
                   <DatePicker
                     datePickerType="single"
                     //   dateFormat={datePickerFormat}
@@ -150,7 +185,7 @@ const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
                   >
                     <DatePickerInput
                       id="datePickerInput"
-                      labelText={t('date', 'Date')}
+                      labelText="Date of Transfer"
                       style={{ width: '100%' }}
                       // placeholder={datePickerPlaceHolder}
                       ref={ref}
@@ -161,28 +196,97 @@ const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
             </ResponsiveWrapper>
           </section>
 
-          {/* <section className={styles.formGroup}>
-            <span className={styles.heading}>{t('note', 'Text')}</span>
+          <section className={styles.formGroup}>
             <ResponsiveWrapper>
               <Controller
-                name="testInput"
+                name="name"
                 control={control}
                 render={({ field: { onChange, onBlur, value, ref } }) => (
                   <TextInput
-                    id="testInput"
+                    id="name"
                     value={value}
-                    labelText={t('appointmentNoteLabel', 'Test input')}
-                    placeholder={t('appointmentNotePlaceholder', 'test text')}
-                    onChange={onChange}
+                    labelText="Name"
+                    placeholder="Patient Name"
                     onBlur={onBlur}
                     ref={ref}
                   />
                 )}
               />
             </ResponsiveWrapper>
-          </section> */}
+          </section>
 
           <section className={styles.formGroup}>
+            <ResponsiveWrapper>
+              <Controller
+                name="mrn"
+                control={control}
+                render={({ field: { onChange, onBlur, value, ref } }) => (
+                  <TextInput id="mrn" value={value} labelText="MRN" placeholder="MRN" onBlur={onBlur} ref={ref} />
+                )}
+              />
+            </ResponsiveWrapper>
+          </section>
+
+          <section className={styles.formGroup}>
+            <ResponsiveWrapper>
+              <Controller
+                name="artStarted"
+                control={control}
+                render={({ field: { onChange, value, onBlur, ref } }) => (
+                  <Select
+                    id="artStarted"
+                    invalidText="Required"
+                    labelText="ART Started"
+                    onChange={onChange}
+                    onBlur={onBlur}
+                    value={value}
+                    ref={ref}
+                  >
+                    <SelectItem key={1} text={''} value={''}></SelectItem>
+                    <SelectItem key={1} text={'Yes'} value={'1065AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'}>
+                      Yes
+                    </SelectItem>
+                    <SelectItem key={2} text={'No'} value={'1066AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'}>
+                      No
+                    </SelectItem>
+                  </Select>
+                )}
+              />
+            </ResponsiveWrapper>
+          </section>
+
+          <section className={styles.formGroup}>
+            <ResponsiveWrapper>
+              <Controller
+                name="originalFirstLineRegimenDose"
+                control={control}
+                render={({ field: { onChange, value, onBlur, ref } }) => (
+                  <Select
+                    id="originalFirstLineRegimenDose"
+                    invalidText="Required"
+                    labelText="Original First Line Regimen Dose"
+                    onChange={onChange}
+                    onBlur={onBlur}
+                    value={value}
+                    ref={ref}
+                  >
+                    <SelectItem key={1} text={''} value={''}></SelectItem>
+                    <SelectItem key={1} text={'1a30 - D4T(30)+3TC+NVP'} value={'2798d3bc-2e0a-459c-b249-9516b380a69e'}>
+                      1a30 - D4T(30)+3TC+NVP
+                    </SelectItem>
+                    <SelectItem key={2} text={'1a40 - D4T(40)+3TC+NVP'} value={'3495d89f-4d46-44d8-b1c9-d101bc9f15d4'}>
+                      1a40 - D4T(40)+3TC+NVP
+                    </SelectItem>
+                    <SelectItem key={1} text={'1b30 - D4T(30)+3TC+EFV'} value={'ae0dc59c-eb3d-421b-913b-ee5a06ec6182'}>
+                      1b30 - D4T(30)+3TC+EFV
+                    </SelectItem>
+                  </Select>
+                )}
+              />
+            </ResponsiveWrapper>
+          </section>
+
+          {/* <section className={styles.formGroup}>
             <span className={styles.heading}>{t('note', 'Note')}</span>
             <ResponsiveWrapper>
               <Controller
@@ -201,10 +305,10 @@ const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
                 )}
               />
             </ResponsiveWrapper>
-          </section>
+          </section> */}
         </Stack>
 
-        <ButtonSet>
+        <ButtonSet style={{ marginTop: '20px' }}>
           <Button className={styles.button} onClick={closeWorkspace} kind="secondary">
             {t('discard', 'Discard')}
           </Button>
