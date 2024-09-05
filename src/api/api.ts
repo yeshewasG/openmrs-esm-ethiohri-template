@@ -30,3 +30,12 @@ export async function getPatientInfo(patientUuid: string) {
     return null;
   }
 }
+
+export function getPatientEncounters(patientUUID, encounterUUID) {
+  //This function fetches the first two encounters for a given patient. You can remove the limit and also the "v=full"
+  return openmrsFetch(
+    `${restBaseUrl}/encounter?encounterType=${encounterUUID}&patient=${patientUUID}&v=full&limit=5`,
+  ).then(({ data }) => {
+    return data.results;
+  });
+}

@@ -12,8 +12,13 @@ import { Text } from '@carbon/react/lib/components/Text';
 import { TextInput } from '@carbon/react';
 import { ButtonSet } from '@carbon/react';
 import { Button } from '@carbon/react';
-import { fetchLocation, getPatientInfo, saveEncounter } from '../api/api';
-import { TRANSFEROUT_ENCOUNTER_TYPE_UUID, TRANSFEROUT_FORM_UUID } from '../constants';
+import { fetchLocation, getPatientEncounters, getPatientInfo, saveEncounter } from '../api/api';
+import {
+  FOLLOWUP_ENCOUNTER_TYPE_UUID,
+  TRANSFEROUT_ENCOUNTER_TYPE_UUID,
+  TRANSFEROUT_FORM_UUID,
+  transferOutFieldConcepts,
+} from '../constants';
 
 type FormInputs = {
   transferredFrom: string;
@@ -37,8 +42,6 @@ const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
   const [facilityLocationName, setFacilityLocationName] = useState('');
 
   // const encounterDatetime = '2024-07-24T11:57:37.991Z';
-  console.log(new Date(new Date().toString().split('GMT')[0] + ' UTC').toISOString());
-
   const encounterDatetime = new Date(new Date().toString().split('GMT')[0] + ' UTC').toISOString();
   const encounterProviders = [
     { provider: 'caa66686-bde7-4341-a330-91b7ad0ade07', encounterRole: 'a0b03050-c99b-11e0-9572-0800200c9a66' },
@@ -73,15 +76,18 @@ const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
     })();
   }, []);
 
-  const conceptObject = {
-    transfferedFrom: '161550AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-    transferredTo: '2c30c599-1e4f-46f9-8488-5ab57cdc8ac3',
-    name: '1593AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-    mrn: '9f760fe1-5cde-41ab-99b8-b8e1d77de902',
-    artStarted: '1149AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-    originalFirstLineRegimenDose: '6d7d0327-e1f8-4246-bfe5-be1e82d94b14',
-    dateOfTransfer: '160649AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  };
+  useEffect(() => {
+    (async function () {
+      const encounters = await getPatientEncounters(patientUuid, FOLLOWUP_ENCOUNTER_TYPE_UUID);
+      const firstEncounterWithRegimen = encounters?.find((encounter) =>
+        encounter?.obs?.find((e) => e?.concept?.uuid === transferOutFieldConcepts.originalFirstLineRegimenDose),
+      );
+      const originalRegimen = firstEncounterWithRegimen?.obs?.find(
+        (e) => e?.concept?.uuid === transferOutFieldConcepts.originalFirstLineRegimenDose,
+      )?.value?.uuid;
+      setValue('originalFirstLineRegimenDose', originalRegimen);
+    })();
+  }, []);
 
   const formatValue = (value) => {
     return value instanceof Object
@@ -94,7 +100,7 @@ const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
     Object.keys(fieldValues).forEach((key) => {
       if (fieldValues[key]) {
         obs.push({
-          concept: conceptObject[key],
+          concept: transferOutFieldConcepts[key],
           formFieldNamespace: 'rfe-forms',
           formFieldPath: `rfe-forms-${key}`,
           value: formatValue(fieldValues[key]),
@@ -277,8 +283,11 @@ const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
                     <SelectItem key={2} text={'1a40 - D4T(40)+3TC+NVP'} value={'3495d89f-4d46-44d8-b1c9-d101bc9f15d4'}>
                       1a40 - D4T(40)+3TC+NVP
                     </SelectItem>
-                    <SelectItem key={1} text={'1b30 - D4T(30)+3TC+EFV'} value={'ae0dc59c-eb3d-421b-913b-ee5a06ec6182'}>
-                      1b30 - D4T(30)+3TC+EFV
+                    <SelectItem key={1} text={'1c - AZT+3TC+NVP'} value={'a9da3e97-3916-4834-854c-6bcbc5142aca'}>
+                      1c - AZT+3TC+NVP
+                    </SelectItem>
+                    <SelectItem key={1} text={'1d - AZT+3TC+EFV'} value={'b5951dd9-6bb2-4b63-af20-0707500108ea'}>
+                      1d - AZT+3TC+EFV
                     </SelectItem>
                   </Select>
                 )}

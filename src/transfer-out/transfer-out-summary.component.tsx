@@ -17,7 +17,7 @@ import { CardHeader, EmptyState, ErrorState, launchPatientWorkspace } from '@ope
 import { useTranslation } from 'react-i18next';
 import styles from './hiv-care-and-treatment.scss';
 import { useEncounters } from './transfer-out.resource';
-import { phdpConcepts, phdpEncounterTypeUuid, transferOutWorkspace } from '../constants';
+import { TRANSFEROUT_ENCOUNTER_TYPE_UUID, transferOutFieldConcepts, transferOutWorkspace } from '../constants';
 import { getObsFromEncounter } from '../utils/encounter-utils';
 import { EncounterActionMenu } from '../utils/encounter-action-menu';
 
@@ -29,26 +29,45 @@ const TransferOutSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid })
   const { t } = useTranslation();
   const displayText = 'Transfer Out';
   const headerTitle = 'Transfer Out';
-  const { encounters, isError, isLoading, isValidating } = useEncounters(patientUuid, phdpEncounterTypeUuid);
+  const { encounters, isError, isLoading, isValidating } = useEncounters(patientUuid, TRANSFEROUT_ENCOUNTER_TYPE_UUID);
   const layout = useLayoutType();
   const isTablet = layout === 'tablet';
   const isDesktop = layout === 'small-desktop' || layout === 'large-desktop';
 
-  const launchHivCareAndTreatmentForm = useCallback(() => launchPatientWorkspace(transferOutWorkspace), []);
+  const launchTransferOutForm = useCallback(() => launchPatientWorkspace(transferOutWorkspace), []);
 
   const tableHeaders = [
-    { key: 'appointmentDate', header: t('appointmentDate', 'Appointment Date') },
-
+    { key: 'transferredTo', header: 'Transferred to' },
     {
-      key: 'appointmentNote',
-      header: t('appointmentNote', 'Appointment Note'),
+      key: 'dateOfTransfer',
+      header: 'Date of Transfer',
+    },
+    {
+      key: 'name',
+      header: 'Name',
+    },
+    {
+      key: 'mrn',
+      header: 'MRN',
+    },
+    {
+      key: 'artStarted',
+      header: 'ART Started',
+    },
+    {
+      key: 'regimen',
+      header: 'Regimen',
     },
   ];
 
   const tableRows = useMemo(() => {
     return encounters?.map((encounter) => ({
-      appointmentDate: getObsFromEncounter(encounter, phdpConcepts.appointmentDateTime, true) ?? '--',
-      appointmentNote: getObsFromEncounter(encounter, phdpConcepts.appointmentNote) ?? '--',
+      transferredTo: getObsFromEncounter(encounter, transferOutFieldConcepts.transferredTo) ?? '--',
+      dateOfTransfer: getObsFromEncounter(encounter, transferOutFieldConcepts.dateOfTransfer, true) ?? '--',
+      name: getObsFromEncounter(encounter, transferOutFieldConcepts.name) ?? '--',
+      mrn: getObsFromEncounter(encounter, transferOutFieldConcepts.mrn) ?? '--',
+      artStarted: getObsFromEncounter(encounter, transferOutFieldConcepts.artStarted) ?? '--',
+      regimen: getObsFromEncounter(encounter, transferOutFieldConcepts.originalFirstLineRegimenDose) ?? '--',
     }));
   }, [encounters]);
 
@@ -66,7 +85,7 @@ const TransferOutSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid })
             kind="ghost"
             renderIcon={(props) => <Add size={16} {...props} />}
             iconDescription="Add"
-            onClick={launchHivCareAndTreatmentForm}
+            onClick={launchTransferOutForm}
           >
             {t('add', 'Add')}
           </Button>
@@ -113,7 +132,7 @@ const TransferOutSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid })
       </div>
     );
   }
-  return <EmptyState displayText={displayText} headerTitle={headerTitle} launchForm={launchHivCareAndTreatmentForm} />;
+  return <EmptyState displayText={displayText} headerTitle={headerTitle} launchForm={launchTransferOutForm} />;
 };
 
 export default TransferOutSummary;
