@@ -2,38 +2,30 @@ import { getAsyncLifecycle, defineConfigSchema, getSyncLifecycle } from '@openmr
 import { configSchema } from './config-schema';
 import { createDashboardLink } from '@openmrs/esm-patient-common-lib';
 import { dashboardMeta } from './dashboard.meta';
-import HivCareAndTreatmentSummary from './careAndTreatment/hiv-care-and-treatment.component';
+import TransferOutSummary from './transfer-out/transfer-out-summary.component';
 
-const moduleName = '@openmrs/esm-ethio-hiv';
+const moduleName = '@openmrs/esm-ethio-transfer-out';
 
 const options = {
-  featureName: 'hiv-care-and-treatment',
+  featureName: 'transfer-out',
   moduleName,
 };
 
 export const importTranslation = require.context('../translations', false, /.json$/, 'lazy');
-
 
 export function startupApp() {
   defineConfigSchema(moduleName, configSchema);
 }
 
 export const root = getAsyncLifecycle(() => import('./root.component'), options);
-export const testPage = getAsyncLifecycle(() => import('./forms/test-form.component'), options);
-
-export const hivCareAndTreatmentDetailedSummary = getSyncLifecycle(HivCareAndTreatmentSummary, options);
-
-
+export const transferOutSummary = getSyncLifecycle(TransferOutSummary, options);
 
 //Care & treatment dashboard link
-export const hivCareAndTreatmentDashboardLink = getSyncLifecycle(
+export const transferOutDashboardLink = getSyncLifecycle(
   createDashboardLink({
     ...dashboardMeta,
     moduleName,
   }),
   options,
 );
-export const hivCareAndTreatmentFormWorkspace = getAsyncLifecycle(
-  () => import('./forms/test-form.component'),
-  options,
-);
+export const transferOutWorkspace = getAsyncLifecycle(() => import('./forms/transfer-out-form.component'), options);

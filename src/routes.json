@@ -21,9 +21,9 @@
       "slot": "Boxes"
     },
     {
-      "name": "hivCareAndTreatment-details-widget",
-      "component": "hivCareAndTreatmentDetailedSummary",
-      "slot": "patient-chart-hivCareAndTreatment-dashboard-slot",
+      "name": "transfer-out-summary-widget",
+      "component": "transferOutSummary",
+      "slot": "transfer-out-dashboard-slot",
       "online": true,
       "offline": true,
       "meta": {
@@ -31,16 +31,16 @@
       }
     },
     {
-      "name": "hivCareAndTreatment-summary-dashboard",
-      "component": "hivCareAndTreatmentDashboardLink",
+      "name": "transfer-out-summary-dashboard",
+      "component": "transferOutDashboardLink",
       "slot": "patient-chart-dashboard-slot",
       "online": true,
       "offline": true,
       "order": 6,
       "meta": {
         "columns": 1,
-        "slot": "patient-chart-hivCareAndTreatment-dashboard-slot",
-        "path": "hiv-care-and-treatment"
+        "slot": "transfer-out-dashboard-slot",
+        "path": "transfer-out"
       }
     },
     {
@@ -52,17 +52,13 @@
     {
       "component": "root",
       "route": "root"
-    },
-    {
-      "component": "testPage",
-      "route": "testpage"
     }
   ],
   "workspaces": [
     {
-      "name": "hiv-care-and-treatment-form-workspace",
-      "title": "New PHDP Encounter",
-      "component": "hivCareAndTreatmentFormWorkspace",
+      "name": "transfer-out-workspace",
+      "title": "Transfer Out",
+      "component": "transferOutWorkspace",
       "type": "form",
       "canMaximize": true,
       "canHide": true

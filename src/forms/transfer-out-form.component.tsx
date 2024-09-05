@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from '../root.scss';
@@ -22,7 +21,11 @@ type FormInputs = {
   appointmentDateTime: Date;
 };
 
-const Root: React.FC = () => {
+interface TransferOutFormProps {
+  patientUuid: string;
+}
+
+const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
   const { t } = useTranslation();
 
   const onError = (error) => console.error(error);
@@ -36,7 +39,7 @@ const Root: React.FC = () => {
   const encounterType = 'f1b397c1-46bd-43e6-a23d-ae2cedaec881';
   const form = { uuid: 'e270770f-19bf-3d32-baaf-4b677983dec3' };
   const location = '44c3efb0-2583-4c80-a79e-1f756a03c0a1';
-  const patient = 'e70d161e-9d7c-417d-b516-935aa9938d2b';
+  const patient = '104f9000-8391-4715-b3c2-13c6d8604da1';
   const orders = [];
 
   const [pickedDate, setPickedDate] = useState<Date | null>(null); // Added state for pickedDate
@@ -89,10 +92,9 @@ const Root: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <h3 className={styles.welcome}>{t('welcomeText', 'Welcome to the O3 Template app')}</h3>
-      <p className={styles.explainer}>
-        {t('explainer', 'The following examples demonstrate some key features of the O3 framework')}.
-      </p>
+      <h3 className={styles.welcome}>{t('welcomeText', 'Test Form without using form-engine')}</h3>
+      <p className={styles.explainer}>{t('explainer', 'Sample encounter form')}.</p>
+      <p className={styles.explainer}>{patientUuid}.</p>
 
       <Form onSubmit={handleSubmit(handleFormSubmit, onError)}>
         <Stack gap={4}>
@@ -215,4 +217,4 @@ const Root: React.FC = () => {
   );
 };
 
-export default Root;
+export default TransferOutForm;
