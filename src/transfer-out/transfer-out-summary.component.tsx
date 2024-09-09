@@ -25,6 +25,7 @@ interface HivCareAndTreatmentProps {
   patientUuid: string;
 }
 
+
 const TransferOutSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) => {
   const { t } = useTranslation();
   const displayText = 'Transfer Out';
@@ -62,6 +63,7 @@ const TransferOutSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid })
 
   const tableRows = useMemo(() => {
     return encounters?.map((encounter) => ({
+      id: encounter.uuid,
       transferredTo: getObsFromEncounter(encounter, transferOutFieldConcepts.transferredTo) ?? '--',
       dateOfTransfer: getObsFromEncounter(encounter, transferOutFieldConcepts.dateOfTransfer, true) ?? '--',
       name: getObsFromEncounter(encounter, transferOutFieldConcepts.name) ?? '--',
@@ -70,6 +72,7 @@ const TransferOutSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid })
       regimen: getObsFromEncounter(encounter, transferOutFieldConcepts.originalFirstLineRegimenDose) ?? '--',
     }));
   }, [encounters]);
+  
 
   console.log(tableRows);
 
@@ -118,8 +121,8 @@ const TransferOutSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid })
                       ))}
                       <TableCell className="cds--table-column-menu">
                         <EncounterActionMenu
-                          patientUuid={patientUuid}
                           encounter={encounters.find((encounter) => encounter.uuid === row.id)}
+                          patientUuid={patientUuid}
                         />
                       </TableCell>
                     </TableRow>

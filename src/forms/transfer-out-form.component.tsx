@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from '../root.scss';
-import { OpenmrsDatePicker, ResponsiveWrapper, closeWorkspace } from '@openmrs/esm-framework';
+import { OpenmrsDatePicker, ResponsiveWrapper, closeWorkspace, CloseWorkspaceOptions } from '@openmrs/esm-framework';
 import { Form } from '@carbon/react';
 import { Controller, useForm } from 'react-hook-form';
 import { Select, SelectItem, Toggle, Stack } from '@carbon/react';
@@ -42,7 +42,9 @@ const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
   const [facilityLocationName, setFacilityLocationName] = useState('');
 
   // const encounterDatetime = '2024-07-24T11:57:37.991Z';
-  const encounterDatetime = new Date(new Date().toString().split('GMT')[0] + ' UTC').toISOString();
+  //const encounterDatetime = new Date(new Date().toString().split('GMT')[0] + ' UTC').toISOString();
+  const encounterDatetime = new Date().toISOString();
+
   const encounterProviders = [
     { provider: 'caa66686-bde7-4341-a330-91b7ad0ade07', encounterRole: 'a0b03050-c99b-11e0-9572-0800200c9a66' },
   ];
@@ -53,6 +55,16 @@ const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
   const orders = [];
 
   const [pickedDate, setPickedDate] = useState<Date | null>(null); // Added state for pickedDate
+
+  const closeWorkspaceHandler = (name: string) => {
+    const options: CloseWorkspaceOptions = {
+      ignoreChanges: false, 
+      onWorkspaceClose: () => {
+        console.log('Workspace closed successfully');
+      },
+    };
+    closeWorkspace(name, options);
+  };
 
   useEffect(() => {
     (async function () {
@@ -318,7 +330,7 @@ const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
         </Stack>
 
         <ButtonSet style={{ marginTop: '20px' }}>
-          <Button className={styles.button} onClick={closeWorkspace} kind="secondary">
+          <Button className={styles.button} onClick={() => closeWorkspaceHandler('transfer-out-workspace')} kind="secondary">
             {t('discard', 'Discard')}
           </Button>
           <Button className={styles.button} type="submit">
