@@ -25,7 +25,6 @@ interface HivCareAndTreatmentProps {
   patientUuid: string;
 }
 
-
 const TransferOutSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) => {
   const { t } = useTranslation();
   const displayText = 'Transfer Out';
@@ -72,9 +71,8 @@ const TransferOutSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid })
       regimen: getObsFromEncounter(encounter, transferOutFieldConcepts.originalFirstLineRegimenDose) ?? '--',
     }));
   }, [encounters]);
-  
 
-  console.log(tableRows);
+  // console.log(tableRows);
 
   if (isLoading) return <DataTableSkeleton role="progressbar" compact={isDesktop} zebra />;
   if (isError) return <ErrorState error={isError} headerTitle={headerTitle} />;
