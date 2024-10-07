@@ -20,6 +20,7 @@ import {
   TRANSFEROUT_FORM_UUID,
   transferOutFieldConcepts,
 } from '../constants';
+import dayjs from 'dayjs';
 
 type FormInputs = {
   transferredFrom: string;
@@ -28,7 +29,7 @@ type FormInputs = {
   mrn: string;
   artStarted: string;
   originalFirstLineRegimenDose: string;
-  dateOfTransfer: Date;
+  dateOfTransfer: string;
 };
 
 interface TransferOutFormProps {
@@ -37,6 +38,11 @@ interface TransferOutFormProps {
 
 const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
   const { t } = useTranslation();
+  const [transferOutDate, setTransferOutDate] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const today = new Date();
+  const [notification, setNotification] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+
   const onError = (error) => console.error(error);
   const { control, handleSubmit, setValue } = useForm<FormInputs>();
   const [facilityLocationUUID, setFacilityLocationUUID] = useState('');
@@ -56,6 +62,24 @@ const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
   const orders = [];
 
   const [pickedDate, setPickedDate] = useState<Date | null>(null); // Added state for pickedDate
+
+  const onDateChange = (value: any) => {
+    try {
+      const jsDate = new Date(value);
+      if (isNaN(jsDate.getTime())) {
+        throw new Error('Invalid Date');
+      }
+
+      const formattedDate = dayjs(jsDate).format('YYYY-MM-DD');
+      setValue('dateOfTransfer', formattedDate); // Set dateOfTransfer in form
+      setTransferOutDate(formattedDate);
+      setError(null);
+      setNotification({ message: 'Date selected successfully.', type: 'success' });
+    } catch (e) {
+      setError('Invalid date format');
+      setNotification({ message: 'Invalid date format.', type: 'error' });
+    }
+  };
 
   const closeWorkspaceHandler = (name: string) => {
     const options: CloseWorkspaceOptions = {
@@ -133,6 +157,7 @@ const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
     };
 
     await saveEncounter(new AbortController(), payload);
+    closeWorkspaceHandler('transfer-out-workspace');
     return true;
   };
 
@@ -179,37 +204,15 @@ const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
                 name="dateOfTransfer"
                 control={control}
                 render={({ field: { onChange, value, ref } }) => (
-                  // <OpenmrsDatePicker
-                  //   id="datePickerInput"
-                  //   onChange={onChange}
-                  //   labelText="Date of Transfer"
-                  //   // isDisabled={question.isDisabled}
-                  //   // isReadOnly={isTrue(question.readonly)}
-                  //   // isRequired={question.isRequired ?? false}
-                  //   // isInvalid={errors.length > 0}
-                  //   // invalidText={errors[0]?.message}
-                  //   // value={field.value}
-                  // />
-
-                  <DatePicker
-                    datePickerType="single"
-                    //   dateFormat={datePickerFormat}
-                    // value={pickedDate || value.startDate}
-                    onChange={([date]) => {
-                      if (date) {
-                        onChange({ ...value, startDate: date });
-                      }
-                    }}
-                    //   minDate={minAllowedDate} // Set the minimum allowed date
-                  >
-                    <DatePickerInput
-                      id="datePickerInput"
-                      labelText="Date of Transfer"
-                      style={{ width: '100%' }}
-                      // placeholder={datePickerPlaceHolder}
-                      ref={ref}
-                    />
-                  </DatePicker>
+                  <OpenmrsDatePicker
+                    id="dateOfTransfer"
+                    labelText={t('transferOutDate', 'Transfer Out Date')}
+                    value={transferOutDate}
+                    maxDate={today}
+                    onChange={onDateChange}
+                    ref={ref}
+                    invalidText={error}
+                  />
                 )}
               />
             </ResponsiveWrapper>
