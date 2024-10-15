@@ -1,17 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from '../root.scss';
-import { OpenmrsDatePicker, ResponsiveWrapper, closeWorkspace } from '@openmrs/esm-framework';
+import { OpenmrsDatePicker, ResponsiveWrapper, closeWorkspace, showSnackbar } from '@openmrs/esm-framework';
 import type { CloseWorkspaceOptions } from '@openmrs/esm-framework';
 import { Form } from '@carbon/react';
 import { Controller, useForm } from 'react-hook-form';
-import { Select, SelectItem, Toggle, Stack } from '@carbon/react';
-import { TextArea } from '@carbon/react';
-import { DatePicker } from '@carbon/react';
-import { DatePickerInput } from '@carbon/react';
-import { Text } from '@carbon/react/lib/components/Text';
+import { Select, SelectItem, Stack } from '@carbon/react';
 import { TextInput } from '@carbon/react';
-import { ButtonSet } from '@carbon/react';
 import { Button } from '@carbon/react';
 import { fetchLocation, getPatientEncounters, getPatientInfo, saveEncounter } from '../api/api';
 import {
@@ -21,6 +16,10 @@ import {
   transferOutFieldConcepts,
 } from '../constants';
 import dayjs from 'dayjs';
+import { useEncounters } from '../transfer-out/transfer-out.resource';
+import type { OpenmrsEncounter } from '../types';
+import { getObsFromEncounter } from '../utils/encounter-utils';
+import { ButtonSet } from '@carbon/react';
 
 type FormInputs = {
   transferredFrom: string;
@@ -34,22 +33,20 @@ type FormInputs = {
 
 interface TransferOutFormProps {
   patientUuid: string;
+  encounter?: OpenmrsEncounter; // If provided, it means we are editing an encounter
 }
 
-const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
+const TransferOutForm: React.FC<TransferOutFormProps> = ({ patientUuid, encounter }) => {
   const { t } = useTranslation();
   const [transferOutDate, setTransferOutDate] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const today = new Date();
   const [notification, setNotification] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
 
-  const onError = (error) => console.error(error);
   const { control, handleSubmit, setValue } = useForm<FormInputs>();
   const [facilityLocationUUID, setFacilityLocationUUID] = useState('');
   const [facilityLocationName, setFacilityLocationName] = useState('');
 
-  // const encounterDatetime = '2024-07-24T11:57:37.991Z';
-  //const encounterDatetime = new Date(new Date().toString().split('GMT')[0] + ' UTC').toISOString();
   const encounterDatetime = new Date().toISOString();
 
   const encounterProviders = [
@@ -61,35 +58,8 @@ const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
   const patient = patientUuid;
   const orders = [];
 
-  const [pickedDate, setPickedDate] = useState<Date | null>(null); // Added state for pickedDate
-
-  const onDateChange = (value: any) => {
-    try {
-      const jsDate = new Date(value);
-      if (isNaN(jsDate.getTime())) {
-        throw new Error('Invalid Date');
-      }
-
-      const formattedDate = dayjs(jsDate).format('YYYY-MM-DD');
-      setValue('dateOfTransfer', formattedDate); // Set dateOfTransfer in form
-      setTransferOutDate(formattedDate);
-      setError(null);
-      setNotification({ message: 'Date selected successfully.', type: 'success' });
-    } catch (e) {
-      setError('Invalid date format');
-      setNotification({ message: 'Invalid date format.', type: 'error' });
-    }
-  };
-
-  const closeWorkspaceHandler = (name: string) => {
-    const options: CloseWorkspaceOptions = {
-      ignoreChanges: false,
-      onWorkspaceClose: () => {
-        // console.log('Workspace closed successfully');
-      },
-    };
-    closeWorkspace(name, options);
-  };
+  // Fetch patient encounters
+  const { encounters, isError, isLoading, mutate } = useEncounters(patientUuid, TRANSFEROUT_ENCOUNTER_TYPE_UUID);
 
   useEffect(() => {
     (async function () {
@@ -103,6 +73,7 @@ const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
     })();
   }, []);
 
+  // Fetch patient information
   useEffect(() => {
     (async function () {
       const patientInfo = await getPatientInfo(patientUuid);
@@ -113,18 +84,58 @@ const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
     })();
   }, [patientUuid, setValue]);
 
+  // Load existing encounter data if editing
   useEffect(() => {
-    (async function () {
-      const encounters = await getPatientEncounters(patientUuid, FOLLOWUP_ENCOUNTER_TYPE_UUID);
-      const firstEncounterWithRegimen = encounters?.find((encounter) =>
-        encounter?.obs?.find((e) => e?.concept?.uuid === transferOutFieldConcepts.originalFirstLineRegimenDose),
+    if (encounter) {
+      const dateOfTransferObs = getObsFromEncounter(encounter, transferOutFieldConcepts.dateOfTransfer);
+      if (dateOfTransferObs && dayjs(dateOfTransferObs).isValid()) {
+        setValue('dateOfTransfer', dayjs(dateOfTransferObs).format('YYYY-MM-DD'));
+        setTransferOutDate(
+          dayjs(getObsFromEncounter(encounter, transferOutFieldConcepts.dateOfTransfer)).format('YYYY-MM-DD'),
+        );
+      } else {
+        setValue('dateOfTransfer', ''); // or any default value like null or empty string
+      }
+      setValue(
+        'transferredTo',
+        encounter?.obs?.find((e) => e?.concept?.uuid === transferOutFieldConcepts.transferredTo)?.value || '',
       );
-      const originalRegimen = firstEncounterWithRegimen?.obs?.find(
-        (e) => e?.concept?.uuid === transferOutFieldConcepts.originalFirstLineRegimenDose,
-      )?.value?.uuid;
-      setValue('originalFirstLineRegimenDose', originalRegimen);
-    })();
-  }, [patientUuid, setValue]);
+      setValue(
+        'artStarted',
+        encounter?.obs?.find((e) => e?.concept?.uuid === transferOutFieldConcepts.artStarted)?.value?.uuid || '',
+      );
+      setValue(
+        'originalFirstLineRegimenDose',
+        encounter?.obs?.find((e) => e?.concept?.uuid === transferOutFieldConcepts.originalFirstLineRegimenDose)?.value
+          ?.uuid || '',
+      );
+    }
+  }, [encounter, setValue]);
+
+  const onDateChange = (value: any) => {
+    try {
+      const jsDate = new Date(value);
+      if (isNaN(jsDate.getTime())) {
+        throw new Error('Invalid Date');
+      }
+      const formattedDate = dayjs(jsDate).format('YYYY-MM-DD');
+      setValue('dateOfTransfer', formattedDate);
+      setTransferOutDate(formattedDate);
+      setError(null);
+      setNotification({ message: 'Date selected successfully.', type: 'success' });
+    } catch (e) {
+      setError('Invalid date format');
+      setNotification({ message: 'Invalid date format.', type: 'error' });
+    }
+  };
+
+  const closeWorkspaceHandler = (name: string) => {
+    const options: CloseWorkspaceOptions = {
+      ignoreChanges: false,
+      onWorkspaceClose: () => {},
+    };
+    closeWorkspace(name, options);
+  };
 
   const formatValue = (value) => {
     return value instanceof Object
@@ -134,6 +145,8 @@ const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
 
   const handleFormSubmit = async (fieldValues: FormInputs) => {
     const obs = [];
+
+    // Prepare observations from field values
     Object.keys(fieldValues).forEach((key) => {
       if (fieldValues[key]) {
         obs.push({
@@ -145,6 +158,7 @@ const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
       }
     });
 
+    // Construct the base payload
     const payload = {
       encounterDatetime,
       encounterProviders,
@@ -156,14 +170,52 @@ const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
       obs: obs,
     };
 
-    await saveEncounter(new AbortController(), payload);
-    closeWorkspaceHandler('transfer-out-workspace');
-    return true;
+    try {
+      // Check if we are editing an existing encounter
+      if (encounter?.uuid) {
+        // Update the existing encounter
+        await updateEncounter(encounter.uuid, payload); // Pass UUID first, then payload
+        showSnackbar({
+          isLowContrast: true,
+          title: t('updatedEntry', 'Record Updated'),
+          kind: 'success',
+          subtitle: t('transferOutEncounterUpdatedSuccessfully', 'The patient encounter was updated'),
+        });
+      } else {
+        // Create a new encounter if none exists
+        await createEncounter(payload);
+        showSnackbar({
+          isLowContrast: true,
+          title: t('saveEntry', 'Record Saved'),
+          kind: 'success',
+          subtitle: t('transferOutEncounterCreatedSuccessfully', 'A new encounter was created'),
+        });
+      }
+
+      mutate();
+      closeWorkspaceHandler('transfer-out-workspace');
+      return true;
+    } catch (error) {
+      console.error('Error saving encounter:', error);
+    }
+  };
+
+  // Function to create a new encounter
+  const createEncounter = async (payload) => {
+    return await saveEncounter(new AbortController(), payload);
+  };
+
+  // Function to update an existing encounter
+  const updateEncounter = async (uuid, payload) => {
+    if (!uuid || !payload) {
+      throw new Error('Both UUID and payload are required to update an encounter.'); // Ensure UUID and payload are provided
+    }
+    return await saveEncounter(new AbortController(), payload, uuid); // Use saveEncounter for updating
   };
 
   return (
     <div className={styles.container}>
-      <Form onSubmit={handleSubmit(handleFormSubmit, onError)}>
+      <Form onSubmit={handleSubmit(handleFormSubmit)}>
         <Stack gap={4}>
           <section className={styles.formGroup}>
             <ResponsiveWrapper>
@@ -254,14 +306,13 @@ const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
               <Controller
                 name="artStarted"
                 control={control}
-                render={({ field: { onChange, value, onBlur, ref } }) => (
+                render={({ field: { onChange, onBlur, value, ref } }) => (
                   <Select
                     id="artStarted"
-                    invalidText="Required"
                     labelText="ART Started"
+                    value={value}
                     onChange={onChange}
                     onBlur={onBlur}
-                    value={value}
                     ref={ref}
                   >
                     <SelectItem key={1} text={''} value={''}></SelectItem>
@@ -282,14 +333,13 @@ const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
               <Controller
                 name="originalFirstLineRegimenDose"
                 control={control}
-                render={({ field: { onChange, value, onBlur, ref } }) => (
+                render={({ field: { onChange, onBlur, value, ref } }) => (
                   <Select
                     id="originalFirstLineRegimenDose"
-                    invalidText="Required"
                     labelText="Original First Line Regimen Dose"
+                    value={value}
                     onChange={onChange}
                     onBlur={onBlur}
-                    value={value}
                     ref={ref}
                   >
                     <SelectItem key={1} text={''} value={''}></SelectItem>
@@ -311,40 +361,23 @@ const TransferOutForm: React.FC = ({ patientUuid }: TransferOutFormProps) => {
             </ResponsiveWrapper>
           </section>
 
-          {/* <section className={styles.formGroup}>
-            <span className={styles.heading}>{t('note', 'Note')}</span>
-            <ResponsiveWrapper>
-              <Controller
-                name="appointmentNote"
-                control={control}
-                render={({ field: { onChange, onBlur, value, ref } }) => (
-                  <TextArea
-                    id="appointmentNote"
-                    value={value}
-                    labelText={t('appointmentNoteLabel', 'Write an additional note')}
-                    placeholder={t('appointmentNotePlaceholder', 'Write any additional points here')}
-                    onChange={onChange}
-                    onBlur={onBlur}
-                    ref={ref}
-                  />
-                )}
-              />
-            </ResponsiveWrapper>
-          </section> */}
+          <ButtonSet style={{ marginTop: '20px' }}>
+            <Button
+              className={styles.button}
+              onClick={() => closeWorkspaceHandler('transfer-out-workspace')}
+              kind="secondary"
+            >
+              {t('discard', 'Discard')}
+            </Button>
+            <Button className={styles.button} type="submit">
+              {/* {t('saveAndClose', 'Save and close')} */}
+              {encounter ? t('saveAndClose', 'update and close') : t('saveAndClose', 'Save and close')}
+            </Button>
+          </ButtonSet>
+          {notification && (
+            <div className={notification.type === 'error' ? styles.error : styles.success}>{notification.message}</div>
+          )}
         </Stack>
-
-        <ButtonSet style={{ marginTop: '20px' }}>
-          <Button
-            className={styles.button}
-            onClick={() => closeWorkspaceHandler('transfer-out-workspace')}
-            kind="secondary"
-          >
-            {t('discard', 'Discard')}
-          </Button>
-          <Button className={styles.button} type="submit">
-            {t('saveAndClose', 'Save and close')}
-          </Button>
-        </ButtonSet>
       </Form>
     </div>
   );

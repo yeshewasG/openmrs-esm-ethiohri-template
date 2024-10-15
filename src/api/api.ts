@@ -5,13 +5,17 @@ export function saveEncounter(abortController: AbortController, payload, encount
   const url = encounterUuid
     ? `${restBaseUrl}/encounter/${encounterUuid}?v=${encounterRepresentation}`
     : `${restBaseUrl}/encounter?v=${encounterRepresentation}`;
+
   return openmrsFetch(url, {
     headers: {
       'Content-Type': 'application/json',
     },
-    method: 'POST',
-    body: payload,
+    method: encounterUuid ? 'POST' : 'POST',
+    body: JSON.stringify(payload),
     signal: abortController.signal,
+  }).catch((err) => {
+    console.error('Error saving encounter:', err);
+    throw err;
   });
 }
 
