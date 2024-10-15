@@ -96,10 +96,11 @@ const TransferOutForm: React.FC<TransferOutFormProps> = ({ patientUuid, encounte
       } else {
         setValue('dateOfTransfer', ''); // or any default value like null or empty string
       }
-      setValue(
-        'transferredTo',
-        encounter?.obs?.find((e) => e?.concept?.uuid === transferOutFieldConcepts.transferredTo)?.value || '',
-      );
+      // setValue(
+      //   'transferredTo',
+      //   encounter?.obs?.find((e) => e?.concept?.uuid === transferOutFieldConcepts.transferredTo)?.value || '',
+      // );
+      setValue('transferredTo', getObsFromEncounter(encounter, transferOutFieldConcepts.transferredTo));
       setValue(
         'artStarted',
         encounter?.obs?.find((e) => e?.concept?.uuid === transferOutFieldConcepts.artStarted)?.value?.uuid || '',
