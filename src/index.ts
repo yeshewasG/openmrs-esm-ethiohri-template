@@ -29,3 +29,8 @@ export const transferOutDashboardLink = getSyncLifecycle(
   options,
 );
 export const transferOutWorkspace = getAsyncLifecycle(() => import('./forms/transfer-out-form.component'), options);
+
+export const encounterDeleteConfirmationDialog = getAsyncLifecycle(() => import('./utils/Delete-Encounter.modal'), {
+  featureName: 'encounters',
+  moduleName: '@openmrs/esm-patient-encounters-app',
+});

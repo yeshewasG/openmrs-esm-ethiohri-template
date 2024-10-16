@@ -6,13 +6,15 @@ import { showModal, useLayoutType } from '@openmrs/esm-framework';
 import styles from './encounter-action-menu.scss';
 import { type OpenmrsEncounter } from '../types';
 import { transferOutWorkspace } from '../constants';
+import { deleteEncounter } from './encounter.resource';
 
-interface encounterActionMenuProps {
+interface EncounterActionMenuProps {
   encounter: OpenmrsEncounter;
   patientUuid?: string;
+  mutateEncounters: () => void;
 }
 
-export const EncounterActionMenu = ({ encounter, patientUuid }: encounterActionMenuProps) => {
+export const EncounterActionMenu = ({ encounter, patientUuid, mutateEncounters }: EncounterActionMenuProps) => {
   const { t } = useTranslation();
   const isTablet = useLayoutType() === 'tablet';
 
@@ -25,10 +27,24 @@ export const EncounterActionMenu = ({ encounter, patientUuid }: encounterActionM
   }, [encounter, t]);
 
   const launchDeleteEncounterDialog = (encounterUuid: string) => {
+    const abortController = new AbortController(); // Create an AbortController
+
     const dispose = showModal('encounter-delete-confirmation-dialog', {
       closeDeleteModal: () => dispose(),
       encounterUuid,
       patientUuid,
+      onConfirmDelete: async () => {
+        try {
+          // Call the deleteEncounter function
+          await deleteEncounter(patientUuid ?? '', encounterUuid, abortController);
+          // Call mutateEncounters to reload the list
+          mutateEncounters();
+
+          dispose(); // Close the modal after success
+        } catch (error) {
+          console.error('Error deleting encounter:', error);
+        }
+      },
     });
   };
 
@@ -53,6 +69,7 @@ export const EncounterActionMenu = ({ encounter, patientUuid }: encounterActionM
           onClick={() => launchDeleteEncounterDialog(encounter.uuid)}
           isDelete
           hasDivider
+          aria-label={t('deleteEncounter', 'Delete Encounter')} // Added aria-label for accessibility
         />
       </OverflowMenu>
     </Layer>
