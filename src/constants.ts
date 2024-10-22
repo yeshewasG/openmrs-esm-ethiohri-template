@@ -7,11 +7,14 @@ export const encounterRepresentation =
 export const transferOutFieldConcepts = {
   transfferedFrom: '161550AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   transferredTo: '2c30c599-1e4f-46f9-8488-5ab57cdc8ac3',
-  name: '1593AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  ClinicianName: '1473AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   mrn: '9f760fe1-5cde-41ab-99b8-b8e1d77de902',
   artStarted: '1149AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   originalFirstLineRegimenDose: '6d7d0327-e1f8-4246-bfe5-be1e82d94b14',
   dateOfTransfer: '160649AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  providerTelephoneNumber: '5587f1b1-1917-4345-a284-a0ed6a56a522',
+  otherSpecify: 'a2148b80-36e8-4e3f-9759-a04c0deafa86',
+  motherPMTCT: '',
 };
 
 export const transferOutWorkspace = 'transfer-out-workspace';

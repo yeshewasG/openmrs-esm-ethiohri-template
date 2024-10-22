@@ -1,0 +1,90 @@
+@use '@carbon/layout';
+@use '@openmrs/esm-styleguide/src/vars' as *;
+@use '@carbon/colors';
+@use '@carbon/type';
+
+.container {
+  margin: layout.$spacing-05;
+
+  & section {
+    margin: layout.$spacing-05 0;
+  }
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.buttonSet {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: 0 layout.$spacing-05;
+}
+
+.button {
+  height: layout.$spacing-10;
+  display: flex;
+  align-content: flex-start;
+  align-items: baseline;
+  width: auto;
+}
+
+.tablet {
+  padding: layout.$spacing-06 layout.$spacing-05;
+  background-color: $ui-02;
+}
+
+.desktop {
+  padding: 0;
+}
+
+.dateTimeSection {
+  display: flex;
+  gap: layout.$spacing-04;
+
+  & > div:first-child {
+    flex: 2; // This makes the first column take up 2/3 of the space
+  }
+
+  & > div:last-child {
+    flex: 1; // This makes the second column take up 1/3 of the space
+  }
+}
+
+.pmtctSection {
+  display: flex;
+  gap: layout.$spacing-04;
+}
+
+@media screen and (max-width: 600px) {
+  .dateTimeSection {
+    flex-direction: column;
+    gap: layout.$spacing-04;
+  }
+}
+:global(.omrs-breakpoint-lt-desktop) .formGroup {
+    flex-direction: row;
+  
+    .heading {
+      flex: 1;
+    }
+  
+    div {
+      flex: 3;
+    }
+  }
+
+.heading {
+  color: colors.$gray-70;
+  @include type.type-style('heading-compact-02');
+  margin-bottom: layout.$spacing-03;
+}
+
+.lastField {
+  margin-bottom: 76px; /* Adjust as necessary */
+}

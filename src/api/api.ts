@@ -43,3 +43,14 @@ export function getPatientEncounters(patientUUID, encounterUUID) {
     return data.results;
   });
 }
+
+export function fetchPatientLastEncounter(patientUuid: string, encounterType) {
+  const query = `encounterType=${encounterType}&patient=${patientUuid}`;
+  return openmrsFetch(`${restBaseUrl}/encounter?${query}&v=${encounterRepresentation}`).then(({ data }) => {
+    if (data.results.length) {
+      return data.results[data.results.length - 1];
+    }
+
+    return null;
+  });
+}

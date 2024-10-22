@@ -60,8 +60,9 @@
       "title": "Transfer Out",
       "component": "transferOutWorkspace",
       "type": "form",
-      "canMaximize": true,
-      "canHide": false
+      "canMaximize": false,
+      "canHide": false,
+      "width": "wider"
     }
   ]
 }

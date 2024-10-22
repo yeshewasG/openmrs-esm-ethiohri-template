@@ -43,7 +43,7 @@ const TransferOutSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid })
   const tableHeaders = [
     { key: 'transferredTo', header: 'Transferred to' },
     { key: 'dateOfTransfer', header: 'Date of Transfer' },
-    { key: 'name', header: 'Name' },
+    { key: 'clinicianName', header: 'Name' },
     { key: 'mrn', header: 'MRN' },
     { key: 'artStarted', header: 'ART Started' },
     { key: 'regimen', header: 'Regimen' },
@@ -55,7 +55,7 @@ const TransferOutSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid })
       id: encounter.uuid,
       transferredTo: getObsFromEncounter(encounter, transferOutFieldConcepts.transferredTo) ?? '--',
       dateOfTransfer: getObsFromEncounter(encounter, transferOutFieldConcepts.dateOfTransfer, true) ?? '--',
-      name: getObsFromEncounter(encounter, transferOutFieldConcepts.name) ?? '--',
+      clinicianName: getObsFromEncounter(encounter, transferOutFieldConcepts.ClinicianName) ?? '--',
       mrn: getObsFromEncounter(encounter, transferOutFieldConcepts.mrn) ?? '--',
       artStarted: getObsFromEncounter(encounter, transferOutFieldConcepts.artStarted) ?? '--',
       regimen: getObsFromEncounter(encounter, transferOutFieldConcepts.originalFirstLineRegimenDose) ?? '--',
