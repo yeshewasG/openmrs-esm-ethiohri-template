@@ -1,13 +1,13 @@
 {
-  "name": "@icap-ethiopia/esm-ethio-hiv-app",
-  "version": "4.0.3",
+  "name": "@icap-ethiopia/esm-ethio-template-app",
+  "version": "4.0.0",
   "license": "MPL-2.0",
   "description": "An OpenMRS seed application for building microfrontends",
-  "browser": "dist/openmrs-esm-ethio-hiv-app.js",
+  "browser": "dist/openmrs-esm-ethio-template-app.js",
   "main": "src/index.ts",
   "source": true,
   "scripts": {
-    "start": "openmrs develop --backend https://ethiohri-dev.globalhealthapp.net",
+    "start": "openmrs develop --backend https://ethiohri-dev.globalhealthapp.net --importmap https://ethiohri-dev.globalhealthapp.net/openmrs/spa/importmap.json",
     "serve": "webpack serve --mode=development",
     "build": "webpack --mode production",
     "analyze": "webpack --mode=production --env analyze=true",

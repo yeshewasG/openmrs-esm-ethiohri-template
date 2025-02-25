@@ -17,8 +17,8 @@ import { useLayoutType } from '@openmrs/esm-framework';
 import { CardHeader, EmptyState, ErrorState, launchPatientWorkspace } from '@openmrs/esm-patient-common-lib';
 import { useTranslation } from 'react-i18next';
 import styles from './hiv-care-and-treatment.scss';
-import { useEncounters } from './transfer-out.resource';
-import { TRANSFEROUT_ENCOUNTER_TYPE_UUID, transferOutFieldConcepts, transferOutWorkspace } from '../constants';
+import { useEncounters } from './template-esm.resource';
+import { TEMPLATE_ENCOUNTER_TYPE_UUID, templateEsmFieldConcepts, templateEsmWorkspace } from '../constants';
 import { getObsFromEncounter } from '../utils/encounter-utils';
 import { EncounterActionMenu } from '../utils/encounter-action-menu';
 
@@ -28,37 +28,31 @@ interface HivCareAndTreatmentProps {
 
 const TransferOutSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid }) => {
   const { t } = useTranslation();
-  const displayText = 'Transfer Out';
-  const headerTitle = 'Transfer Out';
+  const displayText = 'Template ESM';
+  const headerTitle = 'Template ESM';
   const { encounters, isError, isLoading, isValidating, mutate } = useEncounters(
     patientUuid,
-    TRANSFEROUT_ENCOUNTER_TYPE_UUID,
+    TEMPLATE_ENCOUNTER_TYPE_UUID,
   );
   const layout = useLayoutType();
   const isTablet = layout === 'tablet';
   const isDesktop = layout === 'small-desktop' || layout === 'large-desktop';
 
-  const launchTransferOutForm = useCallback(() => launchPatientWorkspace(transferOutWorkspace), []);
+  const launchTemplateEsmForm = useCallback(() => launchPatientWorkspace(templateEsmWorkspace), []);
 
   const tableHeaders = [
-    { key: 'transferredTo', header: 'Transferred to' },
-    { key: 'dateOfTransfer', header: 'Date of Transfer' },
-    { key: 'clinicianName', header: 'Name' },
-    { key: 'mrn', header: 'MRN' },
-    { key: 'artStarted', header: 'ART Started' },
-    { key: 'regimen', header: 'Regimen' },
+    { key: 'sampleTextInput', header: 'temp_col_1' },
+    { key: 'sampleDate', header: 'temp_col_2' },
+    { key: 'sampleNumber', header: 'temp_col_3' },
   ];
 
   const tableRows = useMemo(() => {
     if (!Array.isArray(encounters)) return [];
     return encounters.map((encounter) => ({
       id: encounter.uuid,
-      transferredTo: getObsFromEncounter(encounter, transferOutFieldConcepts.transferredTo) ?? '--',
-      dateOfTransfer: getObsFromEncounter(encounter, transferOutFieldConcepts.dateOfTransfer, true) ?? '--',
-      clinicianName: getObsFromEncounter(encounter, transferOutFieldConcepts.ClinicianName) ?? '--',
-      mrn: getObsFromEncounter(encounter, transferOutFieldConcepts.mrn) ?? '--',
-      artStarted: getObsFromEncounter(encounter, transferOutFieldConcepts.artStarted) ?? '--',
-      regimen: getObsFromEncounter(encounter, transferOutFieldConcepts.originalFirstLineRegimenDose) ?? '--',
+      sampleTextInput: getObsFromEncounter(encounter, templateEsmFieldConcepts.sampleTextInput) ?? '--',
+      sampleDate: getObsFromEncounter(encounter, templateEsmFieldConcepts.sampleDate, true) ?? '--',
+      sampleNumber: getObsFromEncounter(encounter, templateEsmFieldConcepts.sampleNumber) ?? '--',      
       encounterDatetime: encounter.encounterDatetime,
     }));
   }, [encounters]);
@@ -102,7 +96,7 @@ const TransferOutSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid })
           kind="ghost"
           renderIcon={(props) => <Add size={16} {...props} />}
           iconDescription="Add"
-          onClick={launchTransferOutForm}
+          onClick={launchTemplateEsmForm}
         >
           {t('add', 'Add')}
         </Button>
@@ -166,7 +160,7 @@ const TransferOutSummary: React.FC<HivCareAndTreatmentProps> = ({ patientUuid })
           />
         </>
       ) : (
-        <EmptyState displayText={displayText} headerTitle={headerTitle} launchForm={launchTransferOutForm} />
+        <EmptyState displayText={displayText} headerTitle={headerTitle} launchForm={launchTemplateEsmForm} />
       )}
     </div>
   );

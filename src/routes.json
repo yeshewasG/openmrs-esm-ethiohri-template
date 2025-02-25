@@ -21,9 +21,25 @@
       "slot": "Boxes"
     },
     {
-      "name": "transfer-out-summary-widget",
+      "name": "template-esm-ext",
+      "slot": "patient-chart-dashboard-slot",
+      "component": "templateEsmMenu"
+    },
+    {
+      "name": "template-esm-service-ext",
+      "slot": "template-esm-slot",
+      "component": "templateEsmDashboardLink",
+      "meta": {
+        "title": "Template-ESM-Service",
+        "slot": "template-esm-service-slot",
+        "path": "template-esm-service",
+        "columns": 1
+      }
+    },
+    {
+      "name": "teplate-esm-summary-widget",
       "component": "transferOutSummary",
-      "slot": "transfer-out-dashboard-slot",
+      "slot": "template-esm-dashboard-slot",
       "online": true,
       "offline": true,
       "meta": {
@@ -31,7 +47,12 @@
       }
     },
     {
-      "name": "transfer-out-summary-dashboard",
+      "name": "template-esm-chart-ext",
+      "slot": "template-esm-service-slot",
+      "component": "templateEsmServiceChart"
+    },
+    {
+      "name": "teplate-esm-dashboard",
       "component": "transferOutDashboardLink",
       "slot": "patient-chart-dashboard-slot",
       "online": true,
@@ -39,8 +60,8 @@
       "order": 6,
       "meta": {
         "columns": 1,
-        "slot": "transfer-out-dashboard-slot",
-        "path": "transfer-out"
+        "slot": "template-esm-dashboard-slot",
+        "path": "template-esm"
       }
     },
     {
@@ -56,9 +77,9 @@
   ],
   "workspaces": [
     {
-      "name": "transfer-out-workspace",
-      "title": "Transfer Out",
-      "component": "transferOutWorkspace",
+      "name": "template-esm-workspace",
+      "title": "Template ESM",
+      "component": "templateEsmWorkspace",
       "type": "form",
       "canMaximize": false,
       "canHide": false,
