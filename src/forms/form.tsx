@@ -1,7 +1,7 @@
 // src/VitalSignsForm.tsx
-import React, { useState, useEffect, FormEvent } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios, { AxiosResponse } from 'axios';
-import { Patient, EncounterPayload, Facility } from '../types/index';
+import type { EncounterPayload, Facility } from '../types/index';
 import { fetchLocation, saveEncounter } from '../api/api';
 import { usePatient } from '@openmrs/esm-framework';
 
@@ -37,7 +37,7 @@ const VitalSignsForm: React.FC = () => {
   }, []);
 
   // Handle form submission
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
 
     // Concept UUIDs (replace with real ones from your OpenMRS instance)
@@ -64,7 +64,7 @@ const VitalSignsForm: React.FC = () => {
     try {
       const response = await saveEncounter(new AbortController(), encounterPayload, encounterPayload.encounterType); // Use saveEncounter for updating
 
-      console.log('Encounter created:', response.data);
+      // console.log('Encounter created:', response.data);
       alert('Vital signs submitted successfully!');
       // Reset form
       setSystolicBP('');

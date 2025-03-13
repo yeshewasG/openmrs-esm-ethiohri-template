@@ -1,8 +1,8 @@
 {
-  "name": "@icap-ethiopia/esm-ethio-template-app",
-  "version": "4.0.0",
+  "name": "@icap-ethiopia/esm-ethiohri-kpp",
+  "version": "1.0.0",
   "license": "MPL-2.0",
-  "description": "An OpenMRS seed application for building microfrontends",
+  "description": "This npm package provides structured data and utilities for managing Key and Priority Populations (KP & PP) in Ethiopia's HIV prevention roadmap. It includes datasets, analytics tools, and integration functions to support organizations, researchers, and policymakers working in HIV prevention, care, and treatment.",
   "browser": "dist/openmrs-esm-ethio-template-app.js",
   "main": "src/index.ts",
   "source": true,
@@ -26,18 +26,25 @@
   ],
   "keywords": [
     "openmrs",
-    "microfrontends"
+    "microfrontends","ethiopia",
+    "hiv",
+    "key populations",
+    "priority populations",
+    "prevention",
+    "health",
+    "data",
+    "api"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/openmrs/openmrs-esm-template-app.git"
+    "url": "git+https://github.com/yeshewasG/openmrs-esm-ethiohri-kpp"
   },
-  "homepage": "https://github.com/openmrs/openmrs-esm-template-app#readme",
+  "homepage": "https://github.com/yeshewasG/openmrs-esm-ethiohri-kpp#readme",
   "publishConfig": {
     "access": "public"
   },
   "bugs": {
-    "url": "https://github.com/openmrs/openmrs-esm-template-app/issues"
+    "url": "https://github.com/yeshewasG/openmrs-esm-ethiohri-kpp/issues"
   },
   "dependencies": {
     "@carbon/react": "^1.33.1",

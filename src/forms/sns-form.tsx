@@ -151,7 +151,7 @@ const ClientForm: React.FC = () => {
         description: 'Form submitted successfully',
         kind: 'success',
       });
-      console.log('Encounter created:', response);
+      // console.log('Encounter created:', response);
 
       // Reset form after submission
       setValue('sampleDate', null);
