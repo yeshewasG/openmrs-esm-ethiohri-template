@@ -7,6 +7,7 @@ import {
   closeWorkspace,
   showSnackbar,
   useLayoutType,
+  usePatient,
 } from '@openmrs/esm-framework';
 import type { CloseWorkspaceOptions } from '@openmrs/esm-framework';
 import { Form } from '@carbon/react';
@@ -22,24 +23,19 @@ import {
   templateEsmFieldConcepts,
 } from '../constants';
 import dayjs from 'dayjs';
-import { useEncounters } from '../template-esm/template-esm.resource';
+
 import type { OpenmrsEncounter } from '../types';
 import { getObsFromEncounter } from '../utils/encounter-utils';
 import { ButtonSet } from '@carbon/react';
 import { NumberInput } from '@carbon/react';
 import { Checkbox } from '@carbon/react';
+import { useEncounters } from '../componets/data-table.resource';
 
 interface ResponsiveWrapperProps {
   children: React.ReactNode;
   isTablet: boolean;
 }
-type FormInputs = Record<
-  | 'sampleTextInput'
-  | 'sampleNumber'
-  | 'sampleDate'
-  | 'sampleDropDown',
-  string
->;
+type FormInputs = Record<'sampleTextInput' | 'sampleNumber' | 'sampleDate' | 'sampleDropDown', string>;
 
 interface TemplateFormProps {
   patientUuid: string;
@@ -83,7 +79,6 @@ const TemplateForm: React.FC<TemplateFormProps> = ({ patientUuid, encounter }) =
     })();
   }, []);
 
-
   // Load existing encounter data if editing
   useEffect(() => {
     if (encounter) {
@@ -96,8 +91,7 @@ const TemplateForm: React.FC<TemplateFormProps> = ({ patientUuid, encounter }) =
       } else {
         setValue('sampleDate', ''); // or any default value like null or empty string
       }
-      setValue('sampleTextInput', getObsFromEncounter(encounter, templateEsmFieldConcepts.sampleTextInput));      
-      
+      setValue('sampleTextInput', getObsFromEncounter(encounter, templateEsmFieldConcepts.sampleTextInput));
     }
   }, [encounter, setValue]);
 
@@ -110,7 +104,7 @@ const TemplateForm: React.FC<TemplateFormProps> = ({ patientUuid, encounter }) =
         throw new Error('Invalid Date');
       }
       const formattedDate = dayjs(jsDate).format('YYYY-MM-DD');
-      setValue(dateField, formattedDate); 
+      setValue(dateField, formattedDate);
       setError(null);
     } catch (e) {
       setError('Invalid date format');
@@ -199,7 +193,7 @@ const TemplateForm: React.FC<TemplateFormProps> = ({ patientUuid, encounter }) =
     }
     return await saveEncounter(new AbortController(), payload, uuid); // Use saveEncounter for updating
   };
-
+  const patientt = usePatient();
   return (
     <Form className={styles.form} onSubmit={handleSubmit(handleFormSubmit)} data-testid="template-form">
       <Stack gap={1} className={styles.container}>
@@ -277,7 +271,7 @@ const TemplateForm: React.FC<TemplateFormProps> = ({ patientUuid, encounter }) =
               )}
             />
           </ResponsiveWrapper>
-        </section>         
+        </section>
         <section className={styles.formGroup}>
           <span className={styles.heading}>{t('location', 'Drop Down')}</span>
           <div className={styles.pmtctSection}>
@@ -308,13 +302,13 @@ const TemplateForm: React.FC<TemplateFormProps> = ({ patientUuid, encounter }) =
                     </SelectItem>
                     <SelectItem key={4} text={'Opt-4'} value={'b5951dd9-6bb2-4b63-af20-0707500108ea'}>
                       Stage Four
-                    </SelectItem>                    
+                    </SelectItem>
                   </Select>
                 )}
               />
-            </ResponsiveWrapper>            
+            </ResponsiveWrapper>
           </div>
-        </section>        
+        </section>
 
         <section className={styles.fieldGroup}>
           <span className={styles.heading}>{t('location', 'Check-Box:')}</span>
@@ -344,10 +338,10 @@ const TemplateForm: React.FC<TemplateFormProps> = ({ patientUuid, encounter }) =
               id="option4"
               labelText={t('isDeadInputLabel', 'Opt-4')}
               //onChange={(event, { checked, id }) => setFieldValue(id, checked)}
-            />            
+            />
           </div>
           {/* {values.isDead ? fields.map((field) => <Field key={`death-info-${field}`} name={field} />) : null} */}
-        </section>  
+        </section>
         <ButtonSet className={styles.buttonSet}>
           <Button
             onClick={() => closeWorkspaceHandler('template-esm-workspace')}

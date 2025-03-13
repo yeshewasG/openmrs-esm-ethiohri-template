@@ -7,7 +7,7 @@
   "main": "src/index.ts",
   "source": true,
   "scripts": {
-    "start": "openmrs develop --backend https://ethiohri-dev.globalhealthapp.net --importmap https://ethiohri-dev.globalhealthapp.net/openmrs/spa/importmap.json",
+    "start": "openmrs develop --backend https://ethiohri-dev.globalhealthapp.net  --importmap https://ethiohri-dev.globalhealthapp.net/openmrs/spa/importmap.json",
     "serve": "webpack serve --mode=development",
     "build": "webpack --mode production",
     "analyze": "webpack --mode=production --env analyze=true",

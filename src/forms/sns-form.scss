@@ -1,0 +1,18 @@
+@use '@carbon/layout';
+@use '@openmrs/esm-styleguide/src/vars' as *;
+@use '@carbon/colors';
+@use '@carbon/type';
+
+.form {
+  padding: 2rem;
+  max-width: 600px;
+  margin: 0 auto;
+  
+    .field {
+      margin-bottom: 1.5rem;
+    }
+   
+  .btn {
+    margin-top: 1rem;
+    }
+  }

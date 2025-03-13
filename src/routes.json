@@ -6,64 +6,52 @@
   },
   "extensions": [
     {
-      "name": "Red box",
-      "component": "redBox",
-      "slot": "Boxes"
-    },
-    {
-      "name": "Blue box",
-      "component": "blueBox",
-      "slot": "Boxes"
-    },
-        {
-      "name": "Brand box",
-      "component": "blueBox",
-      "slot": "Boxes"
-    },
-    {
-      "name": "template-esm-ext",
+      "name": "kpp-esm-ext",
       "slot": "patient-chart-dashboard-slot",
-      "component": "templateEsmMenu"
+      "component": "kppEsmMenu"
     },
+
+    
+
+     
+    
     {
-      "name": "template-esm-service-ext",
-      "slot": "template-esm-slot",
+      "name": "kpp-dashboard-slot",
       "component": "templateEsmDashboardLink",
-      "meta": {
-        "title": "Template-ESM-Service",
-        "slot": "template-esm-service-slot",
-        "path": "template-esm-service",
-        "columns": 1
-      }
-    },
-    {
-      "name": "teplate-esm-summary-widget",
-      "component": "transferOutSummary",
-      "slot": "template-esm-dashboard-slot",
-      "online": true,
-      "offline": true,
-      "meta": {
-        "columnSpan": 4
-      }
-    },
-    {
-      "name": "template-esm-chart-ext",
-      "slot": "template-esm-service-slot",
-      "component": "templateEsmServiceChart"
-    },
-    {
-      "name": "teplate-esm-dashboard",
-      "component": "transferOutDashboardLink",
-      "slot": "patient-chart-dashboard-slot",
+      "slot": "kpp-esm-slot",
       "online": true,
       "offline": true,
       "order": 6,
       "meta": {
         "columns": 1,
-        "slot": "template-esm-dashboard-slot",
-        "path": "template-esm"
+        "slot": "kpp-dashboard-slot",
+        "path": "kpp"
       }
     },
+    {
+      "name": "sns-dashboard-slot",
+      "component": "snsDashboardLink",
+      "slot": "kpp-esm-slot",
+      "online": true,
+      "offline": true,
+      "order": 6,
+      "meta": {
+        "columns": 1,
+        "slot": "sns-dashboard-slot",
+        "path": "sns"
+      }
+    },
+    {
+      "name": "sns-slot",
+      "slot": "sns-dashboard-slot",
+      "component": "sns"
+    },
+    {
+      "name": "kpp-slot",
+      "slot": "kpp-dashboard-slot",
+      "component": "kpp"
+    },
+     
     {
       "name": "encounter-delete-confirmation-dialog",
       "component": "encounterDeleteConfirmationDialog"
@@ -72,14 +60,22 @@
   "pages": [
     {
       "component": "root",
-      "route": "root"
+      "route": "test"
     }
   ],
   "workspaces": [
     {
-      "name": "template-esm-workspace",
-      "title": "Template ESM",
-      "component": "templateEsmWorkspace",
+      "name": "kpp-form-workspace",
+      "title": "Key and Priority Population",
+      "component": "kppForm",
+      "type": "form",
+      "canMaximize": false,
+      "canHide": false,
+      "width": "wider"
+    },{
+      "name": "sns-form-workspace",
+      "title": "Social Network Service",
+      "component": "snsForm",
       "type": "form",
       "canMaximize": false,
       "canHide": false,
