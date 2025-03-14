@@ -1,5 +1,5 @@
 {
-  "name": "@icap-ethiopia/esm-ethiohri-kpp",
+  "name": "icap-ethiopia-esm-ethiohri-kpp",
   "version": "1.1.0",
   "license": "MPL-2.0",
   "description": "This npm package provides structured data and utilities for managing Key and Priority Populations (KP & PP) in Ethiopia's HIV prevention roadmap. It includes datasets, analytics tools, and integration functions to support organizations, researchers, and policymakers working in HIV prevention, care, and treatment.",
