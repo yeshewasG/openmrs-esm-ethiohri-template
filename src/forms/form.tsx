@@ -1,6 +1,5 @@
 // src/VitalSignsForm.tsx
 import React, { useState, useEffect } from 'react';
-import axios, { AxiosResponse } from 'axios';
 import type { EncounterPayload, Facility } from '../types/index';
 import { fetchLocation, saveEncounter } from '../api/api';
 import { usePatient } from '@openmrs/esm-framework';

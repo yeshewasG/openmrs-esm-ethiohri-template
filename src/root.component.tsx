@@ -12,13 +12,15 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './root.scss';
 import { usePatient } from '@openmrs/esm-framework';
+import ClientForm from './forms/kpp-follow-up-form';
 
 const Root: React.FC = () => {
   const { t } = useTranslation();
   const patient = usePatient();
   return (
     <div className={styles.container}>
-      <h3 className={styles.welcome}>{t('welcomeText', 'Key and Priority Population')}</h3>
+      {/* <h3 className={styles.welcome}>{t('welcomeText', 'Key and Priority Population')}</h3> */}
+      <ClientForm />
     </div>
   );
 };

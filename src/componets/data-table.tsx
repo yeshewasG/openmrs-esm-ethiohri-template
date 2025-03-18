@@ -6,9 +6,15 @@ import {
   Table,
   TableHead,
   TableRow,
+  TableExpandHeader,
   TableHeader,
   TableBody,
   TableCell,
+  TableExpandRow,
+  TableExpandedRow,
+  TableToolbar,
+  TableToolbarContent,
+  TableToolbarSearch,
   Pagination,
 } from '@carbon/react';
 import { DataTableSkeleton, InlineLoading } from '@carbon/react';
@@ -21,7 +27,7 @@ import { EncounterActionMenu } from '../utils/encounter-action-menu';
 import { getObsFromEncounter } from '../utils/encounter-utils';
 import { useEncounters } from './data-table.resource';
 
-// Types
+// Types remain the same
 interface TableColumn {
   key: string;
   header: string;
@@ -43,50 +49,6 @@ interface DataTableProps {
   config: DataTableConfig;
 }
 
-// Generic Table Header Component
-const TableHeaderRow: React.FC<{
-  columns: TableColumn[];
-  getHeaderProps: (props: any) => any;
-}> = ({ columns, getHeaderProps }) => (
-  <TableRow>
-    {columns.map((column) => (
-      <TableHeader key={column.key} {...getHeaderProps({ header: column, isSortable: true })}>
-        {column.header}
-      </TableHeader>
-    ))}
-    <TableHeader />
-  </TableRow>
-);
-
-// Generic Table Body Component
-const TableBodyRows: React.FC<{
-  rows: any[];
-  columns: TableColumn[];
-  data: any[];
-  patientUuid: string;
-  mutate: () => void;
-}> = ({ rows, columns, data, patientUuid, mutate }) => (
-  <TableBody>
-    {rows.map((row) => {
-      const item = data.find((d) => d.uuid === row.id);
-      return (
-        <TableRow key={row.id}>
-          {columns.map((column) => (
-            <TableCell key={`${row.id}-${column.key}`}>
-              {column.transform
-                ? column.transform(row.cells.find((c: any) => c.id.includes(column.key))?.value, item)
-                : row.cells.find((c: any) => c.id.includes(column.key))?.value}
-            </TableCell>
-          ))}
-          <TableCell className="cds--table-column-menu">
-            {item && <EncounterActionMenu patientUuid={patientUuid} encounter={item} mutateEncounters={mutate} />}
-          </TableCell>
-        </TableRow>
-      );
-    })}
-  </TableBody>
-);
-
 const DynamicDataTable: React.FC<DataTableProps> = ({ columns, config }) => {
   const { t } = useTranslation();
   const { encounters, isError, isLoading, isValidating, mutate } = useEncounters(
@@ -104,7 +66,6 @@ const DynamicDataTable: React.FC<DataTableProps> = ({ columns, config }) => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const launchForm = useCallback(() => {
-    // Assuming this is imported from somewhere
     launchPatientWorkspace(config.workspaceName);
   }, [config.workspaceName]);
 
@@ -137,55 +98,95 @@ const DynamicDataTable: React.FC<DataTableProps> = ({ columns, config }) => {
     return sortedRows.slice(startIndex, startIndex + ROWS_PER_PAGE);
   }, [sortedRows, currentPage, ROWS_PER_PAGE]);
 
-  const filterRows = useCallback(({ rowIds, headers, cellsById, inputValue, getCellId }) => {
-    const filterTerm = inputValue.toLowerCase();
-    return rowIds.filter((rowId) =>
-      headers.some(({ key }) => {
-        const cellId = getCellId(rowId, key);
-        const value = cellsById[cellId]?.value;
-        return String(value).toLowerCase().includes(filterTerm);
-      }),
-    );
-  }, []);
-
   if (isLoading) return <DataTableSkeleton role="progressbar" compact={isDesktop} zebra />;
   if (isError) return <ErrorState error={isError} headerTitle={config.headerTitle} />;
 
   return (
     <div className={styles.widgetCard}>
-      <CardHeader title={config.headerTitle}>
-        {isValidating && <InlineLoading />}
-        <Button kind="ghost" renderIcon={Add} iconDescription={t('add', 'Add')} onClick={launchForm}>
-          {t('add', 'Add')}
-        </Button>
-      </CardHeader>
-
       {sortedRows.length > 0 ? (
         <>
           <DataTable
-            filterRows={filterRows}
             rows={paginatedRows}
             headers={columns}
             useZebraStyles
             size={isTablet ? 'lg' : 'sm'}
-          >
-            {({ rows, headers, getHeaderProps, getTableProps }) => (
-              <TableContainer>
+            render={({
+              rows,
+              headers,
+              getHeaderProps,
+              getRowProps,
+              getExpandedRowProps,
+              getTableProps,
+              getTableContainerProps,
+              onInputChange,
+            }) => (
+              <TableContainer
+                title={config.headerTitle}
+                description={isValidating && <InlineLoading />}
+                {...getTableContainerProps()}
+              >
+                <TableToolbar>
+                  <TableToolbarContent>
+                    <Button kind="ghost" renderIcon={Add} iconDescription={t('add', 'Add')} onClick={launchForm}>
+                      {t('add', 'Add')}
+                    </Button>
+                  </TableToolbarContent>
+                </TableToolbar>
                 <Table {...getTableProps()} aria-label={config.headerTitle}>
                   <TableHead>
-                    <TableHeaderRow columns={columns} getHeaderProps={getHeaderProps} />
+                    <TableRow>
+                      <TableExpandHeader aria-label="expand row" />
+                      {headers.map((header) => (
+                        <TableHeader key={header.key} {...getHeaderProps({ header, isSortable: true })}>
+                          {header.header}
+                        </TableHeader>
+                      ))}
+                      <TableHeader />
+                    </TableRow>
                   </TableHead>
-                  <TableBodyRows
-                    rows={rows}
-                    columns={columns}
-                    data={encounters}
-                    patientUuid={config.patientUuid}
-                    mutate={mutate}
-                  />
+                  <TableBody>
+                    {rows.map((row) => {
+                      const item = encounters.find((d) => d.uuid === row.id);
+                      return (
+                        <React.Fragment key={row.id}>
+                          <TableExpandRow {...getRowProps({ row })}>
+                            {row.cells.map((cell) => (
+                              <TableCell key={cell.id}>
+                                {columns.find((col) => cell.id.includes(col.key))?.transform
+                                  ? columns.find((col) => cell.id.includes(col.key))?.transform(cell.value, item)
+                                  : cell.value}
+                              </TableCell>
+                            ))}
+                            <TableCell className="cds--table-column-menu">
+                              {item && (
+                                <EncounterActionMenu
+                                  patientUuid={config.patientUuid}
+                                  encounter={item}
+                                  mutateEncounters={mutate}
+                                />
+                              )}
+                            </TableCell>
+                          </TableExpandRow>
+                          <TableExpandedRow
+                            colSpan={headers.length + 2}
+                            className="demo-expanded-td"
+                            {...getExpandedRowProps({ row })}
+                          >
+                            <h6>Encounter Details</h6>
+                            <div>
+                              <p>Date: {new Date(item?.encounterDatetime).toLocaleString()}</p>
+                              {/* <p>Location: {item?.location?.display || '--'}</p> */}
+                              {/* <p>Provider: {item?.encounterProviders?.[0]?.provider?.display || '--'}</p> */}
+                            </div>
+                          </TableExpandedRow>
+                        </React.Fragment>
+                      );
+                    })}
+                  </TableBody>
                 </Table>
               </TableContainer>
             )}
-          </DataTable>
+          />
           <Pagination
             page={currentPage}
             pageSize={ROWS_PER_PAGE}

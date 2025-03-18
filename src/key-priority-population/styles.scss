@@ -1,0 +1,15 @@
+@use '@carbon/styles/scss/spacing';
+@use '@carbon/styles/scss/type';
+@import '@openmrs/esm-styleguide/src/vars';
+ 
+
+.kpp {
+//   display: flex;
+//   justify-content: space-between;
+//   align-items: center;
+  padding: spacing.$spacing-02 0 spacing.$spacing-04 spacing.$spacing-05;
+//   background-color: $ui-02;
+}
+.tabs{
+    padding-left: 1rem;
+}

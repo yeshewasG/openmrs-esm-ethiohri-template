@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Form, TextInput, RadioButtonGroup, RadioButton, NumberInput, FormGroup, Button } from '@carbon/react';
+import { Stack, Form, TextInput, RadioButtonGroup, RadioButton, NumberInput, FormGroup, Button } from '@carbon/react';
 import { useForm, Controller } from 'react-hook-form';
-import { OpenmrsDatePicker, usePatient, showToast, openmrsFetch, useSession } from '@openmrs/esm-framework'; // Adjust based on your setup
+import {
+  OpenmrsDatePicker,
+  usePatient,
+  showToast,
+  openmrsFetch,
+  useSession,
+  closeWorkspace,
+} from '@openmrs/esm-framework';
 import styles from './sns-form.scss';
+import { fetchLocation } from '../api/api';
+import { Facility } from '../types';
 
 // Define OpenMRS-specific types
 interface Observation {
@@ -32,8 +41,10 @@ interface FormData {
 }
 
 const ClientForm: React.FC = () => {
-  const { patient } = usePatient(); // Get patient from OpenMRS context
+  const patient = usePatient(); // Get patient from OpenMRS context
   const session = useSession();
+  const [location, setLocation] = useState<Facility>();
+
   const { control, handleSubmit, watch, setValue } = useForm<FormData>({
     defaultValues: {
       sampleDate: null,
@@ -59,6 +70,23 @@ const ClientForm: React.FC = () => {
     numberOfCoupons: '165069AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', // e.g., "Number of Coupons"
     couponId: '165070AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', // e.g., "Coupon ID"
   };
+
+  useEffect(() => {
+    const fetchLocationData = async () => {
+      try {
+        const facilityInformation = await fetchLocation();
+        facilityInformation?.data?.results?.forEach((element: any) => {
+          if (element?.tags?.some((x: any) => x.display === 'Facility Location')) {
+            setLocation({ uuid: element.uuid, display: element.display });
+          }
+        });
+      } catch (error) {
+        console.error('Error fetching location:', error);
+      }
+    };
+
+    fetchLocationData();
+  }, []);
 
   // Update coupon array when number of coupons changes
   useEffect(() => {
@@ -119,7 +147,7 @@ const ClientForm: React.FC = () => {
     ];
     // Construct OpenMRS encounter payload
     const encounterPayload: EncounterPayload = {
-      patient: patient?.id || '', // Patient UUID from usePatient()
+      patient: patient.patientUuid || '', // Patient UUID from usePatient()
       encounterDatetime: data.sampleDate?.toISOString() || new Date().toISOString(),
       location: '7f65d926-2495-11e6-bfb2-537d5038b5ed', // Replace with your location UUID
       encounterType: 'e22e39fd-7db2-45e7-80f1-154e437b42e3', // Replace with your encounter type UUID (e.g., "SNS Form")
@@ -250,10 +278,14 @@ const ClientForm: React.FC = () => {
           ))}
         </FormGroup>
       )}
-
-      <Button type="submit" className={`cds--btn--primary ${styles.btn}`}>
-        Submit
-      </Button>
+      <Stack orientation="horizontal">
+        <Button onClick={() => closeWorkspace('sns-form-workspace')} kind="secondary">
+          Dismiss
+        </Button>
+        <Button type="submit" kind="primary">
+          Submit
+        </Button>
+      </Stack>
     </Form>
   );
 };

@@ -11,11 +11,12 @@ import {
   Button,
   MultiSelect,
   InlineNotification,
+  Stack,
 } from '@carbon/react';
 import { useForm, Controller } from 'react-hook-form';
 import axios from 'axios';
 import './kpp-form.scss';
-import { usePatient } from '@openmrs/esm-framework';
+import { closeWorkspace, usePatient } from '@openmrs/esm-framework';
 
 // OpenMRS API Configuration
 const OPENMRS_API_BASE = 'http://localhost:8080/openmrs/ws/rest/v1'; // Update with your instance URL
@@ -342,7 +343,9 @@ const ClientForm: React.FC = () => {
       console.error('Submission error:', error);
     }
   };
-
+  const handleClose = () => {
+    closeWorkspace('kpp-form-workspace');
+  };
   return (
     <div className="client-form-container">
       {submissionStatus && (
@@ -1526,9 +1529,14 @@ const ClientForm: React.FC = () => {
             </>
           )}
 
-          <Button type="submit" className="submit-button">
-            Submit to OpenMRS
-          </Button>
+          <Stack gap={3} orientation="horizontal">
+            <Button onClick={() => handleClose()} kind="secondary">
+              Dismiss
+            </Button>
+            <Button type="submit" kind="primary">
+              Submit
+            </Button>
+          </Stack>
         </div>
       </Form>
     </div>

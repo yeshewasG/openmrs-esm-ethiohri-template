@@ -1,363 +1,255 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './template-form.scss';
-import {
-  OpenmrsDatePicker,
-  ResponsiveWrapper,
-  closeWorkspace,
-  showSnackbar,
-  useLayoutType,
-  usePatient,
-} from '@openmrs/esm-framework';
-import type { CloseWorkspaceOptions } from '@openmrs/esm-framework';
-import { Form } from '@carbon/react';
+import { OpenmrsDatePicker, ResponsiveWrapper, closeWorkspace, showSnackbar, usePatient } from '@openmrs/esm-framework';
+import { Form, ButtonSet, Button, Select, SelectItem, Stack, TextInput, NumberInput, Checkbox } from '@carbon/react';
 import { Controller, useForm } from 'react-hook-form';
-import { Select, SelectItem, Stack } from '@carbon/react';
-import { TextInput } from '@carbon/react';
-import { Button } from '@carbon/react';
-import { fetchLocation, getPatientEncounters, getPatientInfo, saveEncounter } from '../api/api';
-import {
-  FOLLOWUP_ENCOUNTER_TYPE_UUID,
-  TEMPLATE_ENCOUNTER_TYPE_UUID,
-  TEMPLATE_FORM_UUID,
-  templateEsmFieldConcepts,
-} from '../constants';
+import { fetchLocation, saveEncounter } from '../api/api';
+import { TEMPLATE_ENCOUNTER_TYPE_UUID, TEMPLATE_FORM_UUID, templateEsmFieldConcepts } from '../constants';
 import dayjs from 'dayjs';
-
-import type { OpenmrsEncounter } from '../types';
 import { getObsFromEncounter } from '../utils/encounter-utils';
-import { ButtonSet } from '@carbon/react';
-import { NumberInput } from '@carbon/react';
-import { Checkbox } from '@carbon/react';
 import { useEncounters } from '../componets/data-table.resource';
 
-interface ResponsiveWrapperProps {
-  children: React.ReactNode;
-  isTablet: boolean;
-}
-type FormInputs = Record<'sampleTextInput' | 'sampleNumber' | 'sampleDate' | 'sampleDropDown', string>;
+type FormInputs = {
+  sampleTextInput: string;
+  sampleNumber: string;
+  sampleDate: string;
+  sampleDropDown: string;
+};
 
 interface TemplateFormProps {
   patientUuid: string;
-  encounter?: OpenmrsEncounter; // If provided, it means we are editing an encounter
+  encounter?: any;
 }
 
-const TemplateForm: React.FC<TemplateFormProps> = ({ patientUuid, encounter }) => {
+const selectOptions = [
+  { text: 'Opt-1', value: '2798d3bc-2e0a-459c-b249-9516b380a69e' },
+  { text: 'Opt-2', value: '3495d89f-4d46-44d8-b1c9-d101bc9f15d4' },
+  { text: 'Opt-3', value: 'a9da3e97-3916-4834-854c-6bcbc5142aca' },
+  { text: 'Opt-4', value: 'b5951dd9-6bb2-4b63-af20-0707500108ea' },
+];
+
+const TemplateForm: React.FC<TemplateFormProps> = memo(({ patientUuid, encounter }) => {
   const { t } = useTranslation();
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    formState: { isDirty },
+  } = useForm<FormInputs>({
+    defaultValues: {
+      sampleTextInput: '',
+      sampleNumber: '',
+      sampleDate: '',
+      sampleDropDown: '',
+    },
+  });
+
+  const [facilityInfo, setFacilityInfo] = useState({ uuid: '', name: '' });
   const [transferOutDate, setTransferOutDate] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const today = new Date();
-  const [notification, setNotification] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
 
-  const { control, handleSubmit, setValue, watch } = useForm<FormInputs>();
-  const [facilityLocationUUID, setFacilityLocationUUID] = useState('');
-  const [facilityLocationName, setFacilityLocationName] = useState('');
-  const [selectedField, setSelectedField] = useState<keyof FormInputs | null>(null);
+  const { mutate } = useEncounters(patientUuid, TEMPLATE_ENCOUNTER_TYPE_UUID);
 
-  const encounterDatetime = new Date().toISOString();
-
-  const encounterProviders = [
-    { provider: 'caa66686-bde7-4341-a330-91b7ad0ade07', encounterRole: 'a0b03050-c99b-11e0-9572-0800200c9a66' },
-  ];
-  const encounterType = TEMPLATE_ENCOUNTER_TYPE_UUID;
-  const form = { uuid: TEMPLATE_FORM_UUID };
-  const location = facilityLocationUUID;
-  const patient = patientUuid;
-  const orders = [];
-  // Fetch patient encounters
-  const { encounters, isError, isLoading, mutate } = useEncounters(patientUuid, TEMPLATE_ENCOUNTER_TYPE_UUID);
+  const basePayload = {
+    encounterDatetime: new Date().toISOString(),
+    encounterProviders: [
+      {
+        provider: 'caa66686-bde7-4341-a330-91b7ad0ade07',
+        encounterRole: 'a0b03050-c99b-11e0-9572-0800200c9a66',
+      },
+    ],
+    encounterType: TEMPLATE_ENCOUNTER_TYPE_UUID,
+    form: { uuid: TEMPLATE_FORM_UUID },
+    location: facilityInfo.uuid,
+    patient: patientUuid,
+    orders: [],
+  };
 
   useEffect(() => {
-    (async function () {
-      const facilityInformation = await fetchLocation();
-      facilityInformation.data.results.forEach((element) => {
-        if (element.tags.some((x) => x.display === 'Facility Location')) {
-          setFacilityLocationUUID(element.uuid);
-          setFacilityLocationName(element.display);
-        }
-      });
-    })();
+    fetchLocation().then(({ data }) => {
+      const facility = data.results.find((element) => element.tags.some((x) => x.display === 'Facility Location'));
+      if (facility) {
+        setFacilityInfo({ uuid: facility.uuid, name: facility.display });
+      }
+    });
   }, []);
 
-  // Load existing encounter data if editing
   useEffect(() => {
     if (encounter) {
-      const dateOfTransferObs = getObsFromEncounter(encounter, templateEsmFieldConcepts.sampleDate);
-      if (dateOfTransferObs && dayjs(dateOfTransferObs).isValid()) {
-        setValue('sampleDate', dayjs(dateOfTransferObs).format('YYYY-MM-DD'));
-        setTransferOutDate(
-          dayjs(getObsFromEncounter(encounter, templateEsmFieldConcepts.sampleDate)).format('YYYY-MM-DD'),
-        );
-      } else {
-        setValue('sampleDate', ''); // or any default value like null or empty string
+      const dateObs = getObsFromEncounter(encounter, templateEsmFieldConcepts.sampleDate);
+      const textObs = getObsFromEncounter(encounter, templateEsmFieldConcepts.sampleTextInput);
+
+      if (dateObs && dayjs(dateObs).isValid()) {
+        const formattedDate = dayjs(dateObs).format('YYYY-MM-DD');
+        setValue('sampleDate', formattedDate);
+        setTransferOutDate(formattedDate);
       }
-      setValue('sampleTextInput', getObsFromEncounter(encounter, templateEsmFieldConcepts.sampleTextInput));
+      if (textObs) setValue('sampleTextInput', textObs);
     }
   }, [encounter, setValue]);
 
-  type DateFieldKey = 'sampleDate';
-
-  const onDateChange = (value: any, dateField: DateFieldKey) => {
-    try {
-      const jsDate = new Date(value);
-      if (isNaN(jsDate.getTime())) {
-        throw new Error('Invalid Date');
+  const onDateChange = useCallback(
+    (value: any, fieldName: keyof FormInputs) => {
+      try {
+        const date = new Date(value);
+        if (isNaN(date.getTime())) throw new Error('Invalid Date');
+        const formattedDate = dayjs(date).format('YYYY-MM-DD');
+        setValue(fieldName, formattedDate);
+        setTransferOutDate(formattedDate);
+        setError(null);
+      } catch {
+        setError('Invalid date format');
       }
-      const formattedDate = dayjs(jsDate).format('YYYY-MM-DD');
-      setValue(dateField, formattedDate);
-      setError(null);
-    } catch (e) {
-      setError('Invalid date format');
-    }
-  };
+    },
+    [setValue],
+  );
 
-  const closeWorkspaceHandler = (name: string) => {
-    const options: CloseWorkspaceOptions = {
-      ignoreChanges: false,
-      onWorkspaceClose: () => {},
-    };
-    closeWorkspace(name, options);
-  };
-
-  const formatValue = (value) => {
-    return value instanceof Object
-      ? new Date(value.startDate.getTime() - value.startDate?.getTimezoneOffset() * 60000).toISOString().slice(0, 10)
-      : value;
-  };
-
-  const handleFormSubmit = async (fieldValues: FormInputs) => {
-    const obs = [];
-
-    // Prepare observations from field values
-    Object.keys(fieldValues).forEach((key) => {
-      if (fieldValues[key]) {
-        obs.push({
+  const handleFormSubmit = useCallback(
+    async (fieldValues: FormInputs) => {
+      const obs = Object.entries(fieldValues)
+        .filter(([, value]) => value)
+        .map(([key, value]) => ({
           concept: templateEsmFieldConcepts[key],
           formFieldNamespace: 'rfe-forms',
           formFieldPath: `rfe-forms-${key}`,
-          value: formatValue(fieldValues[key]),
-        });
-      }
-    });
+          value: dayjs.isDayjs(value) ? value.format('YYYY-MM-DD') : value,
+        }));
 
-    // Construct the base payload
-    const payload = {
-      encounterDatetime,
-      encounterProviders,
-      encounterType,
-      form,
-      location,
-      patient,
-      orders,
-      obs: obs,
-    };
+      const payload = { ...basePayload, obs };
 
-    try {
-      if (encounter?.uuid) {
-        // Update the existing encounter
-        await updateEncounter(encounter.uuid, payload); // Pass UUID first, then payload
+      try {
+        const response = await saveEncounter(new AbortController(), payload, encounter?.uuid);
+
         showSnackbar({
           isLowContrast: true,
-          title: t('updatedEntry', 'Record Updated'),
+          title: encounter ? t('updatedEntry', 'Record Updated') : t('saveEntry', 'Record Saved'),
           kind: 'success',
-          subtitle: t('transferOutEncounterUpdatedSuccessfully', 'The patient encounter was updated'),
+          subtitle: encounter
+            ? t('transferOutEncounterUpdatedSuccessfully', 'The patient encounter was updated')
+            : t('transferOutEncounterCreatedSuccessfully', 'A new encounter was created'),
         });
-      } else {
-        // Create a new encounter if none exists
-        await createEncounter(payload);
+
+        mutate();
+        closeWorkspace('template-esm-workspace', { ignoreChanges: false });
+        return true;
+      } catch (error) {
+        console.error('Error saving encounter:', error);
         showSnackbar({
-          isLowContrast: true,
-          title: t('saveEntry', 'Record Saved'),
-          kind: 'success',
-          subtitle: t('transferOutEncounterCreatedSuccessfully', 'A new encounter was created'),
+          title: t('error', 'Error'),
+          kind: 'error',
+          subtitle: t('errorSavingEncounter', 'Failed to save encounter'),
         });
       }
+    },
+    [encounter, mutate, t],
+  );
 
-      mutate();
-      closeWorkspaceHandler('template-esm-workspace');
-      return true;
-    } catch (error) {
-      console.error('Error saving encounter:', error);
-    }
-  };
-
-  // Function to create a new encounter
-  const createEncounter = async (payload) => {
-    return await saveEncounter(new AbortController(), payload);
-  };
-
-  // Function to update an existing encounter
-  const updateEncounter = async (uuid, payload) => {
-    if (!uuid || !payload) {
-      throw new Error('Both UUID and payload are required to update an encounter.'); // Ensure UUID and payload are provided
-    }
-    return await saveEncounter(new AbortController(), payload, uuid); // Use saveEncounter for updating
-  };
-  const patientt = usePatient();
   return (
-    <Form className={styles.form} onSubmit={handleSubmit(handleFormSubmit)} data-testid="template-form">
+    <Form className={styles.form} onSubmit={handleSubmit(handleFormSubmit)}>
       <Stack gap={1} className={styles.container}>
-        <section>
-          <ResponsiveWrapper>
-            <TextInput
-              id="facilityName"
-              value={facilityLocationName}
-              labelText="Facility Name"
-              placeholder="Facility Name"
-            />
-          </ResponsiveWrapper>
-        </section>
-        <section className={` ${styles.row}`}>
-          <div className={styles.dateTimeSection}>
-            <ResponsiveWrapper>
-              <Controller
-                name="sampleTextInput"
-                control={control}
-                render={({ field: { onChange, onBlur, value, ref } }) => (
-                  <TextInput
-                    id="sampleTextInput"
-                    value={value}
-                    labelText="Text-Input:"
-                    placeholder="Text Input"
-                    onChange={onChange}
-                    onBlur={onBlur}
-                    //helperText="Helper text"
-                    ref={ref}
-                  />
-                )}
-              />
-            </ResponsiveWrapper>
-            <ResponsiveWrapper>
-              <Controller
-                name="sampleNumber"
-                control={control}
-                //defaultValue={defaultDuration}
-                render={({ field: { onChange, onBlur, value, ref }, fieldState }) => (
-                  <NumberInput
-                    hideSteppers
-                    disableWheel
-                    id="duration"
-                    min={0}
-                    max={999999}
-                    label={t('sampleNumber', 'Number-Input:')}
-                    invalidText={t('invalidNumber', 'Number is not valid')}
-                    size="md"
-                    onBlur={onBlur}
-                    onChange={(event) => onChange(Number(event.target.value))}
-                    value={value}
-                    ref={ref}
-                    invalid={fieldState?.error?.message}
-                  />
-                )}
-              />
-            </ResponsiveWrapper>
-          </div>
-        </section>
-        <section className={styles.formGroup}>
-          <ResponsiveWrapper>
-            <Controller
-              name="sampleDate"
-              control={control}
-              render={({ field: { onChange, value, ref } }) => (
-                <OpenmrsDatePicker
-                  id="sampleDate"
-                  labelText={t('sampleDate', 'Ethio-Date')}
-                  value={transferOutDate}
-                  maxDate={today}
-                  onChange={(date) => onDateChange(date, 'sampleDate')}
-                  ref={ref}
-                  invalidText={error}
+        <ResponsiveWrapper>
+          <TextInput
+            id="facilityName"
+            value={facilityInfo.name}
+            labelText={t('facilityName', 'Facility Name')}
+            readOnly
+          />
+        </ResponsiveWrapper>
+
+        <section className={styles.row}>
+          <Controller
+            name="sampleTextInput"
+            control={control}
+            render={({ field }) => (
+              <ResponsiveWrapper>
+                <TextInput
+                  {...field}
+                  id="sampleTextInput"
+                  labelText={t('textInput', 'Text-Input:')}
+                  placeholder={t('textInputPlaceholder', 'Text Input')}
                 />
-              )}
-            />
-          </ResponsiveWrapper>
+              </ResponsiveWrapper>
+            )}
+          />
+          <Controller
+            name="sampleNumber"
+            control={control}
+            render={({ field }) => (
+              <ResponsiveWrapper>
+                <NumberInput
+                  {...field}
+                  hideSteppers
+                  disableWheel
+                  id="duration"
+                  min={0}
+                  max={999999}
+                  label={t('sampleNumber', 'Number-Input:')}
+                  invalidText={t('invalidNumber', 'Number is not valid')}
+                />
+              </ResponsiveWrapper>
+            )}
+          />
         </section>
+
+        <Controller
+          name="sampleDate"
+          control={control}
+          render={({ field }) => (
+            <ResponsiveWrapper>
+              <OpenmrsDatePicker
+                {...field}
+                id="sampleDate"
+                labelText={t('sampleDate', 'Ethio-Date')}
+                value={transferOutDate}
+                maxDate={new Date()}
+                onChange={(date) => onDateChange(date, 'sampleDate')}
+                invalidText={error}
+              />
+            </ResponsiveWrapper>
+          )}
+        />
+
         <section className={styles.formGroup}>
           <span className={styles.heading}>{t('location', 'Drop Down')}</span>
-          <div className={styles.pmtctSection}>
-            <ResponsiveWrapper>
-              <Controller
-                name="sampleDropDown"
-                control={control}
-                render={({ field: { onChange, value, onBlur, ref }, fieldState }) => (
-                  <Select
-                    id="sampleDropDown"
-                    labelText={t('selectSampleDropDown', '(Drop-Down))')}
-                    onChange={onChange}
-                    onBlur={onBlur}
-                    value={value}
-                    ref={ref}
-                    invalid={!!fieldState?.error?.message}
-                    invalidText={fieldState?.error?.message}
-                  >
-                    <SelectItem text={t('chooseBaselineWHOStage', 'Choose Baseline WHO Stage')} value="" />
-                    <SelectItem key={1} text={'Opt-1'} value={'2798d3bc-2e0a-459c-b249-9516b380a69e'}>
-                      Stage One
-                    </SelectItem>
-                    <SelectItem key={2} text={'Opt-2'} value={'3495d89f-4d46-44d8-b1c9-d101bc9f15d4'}>
-                      Stage Two
-                    </SelectItem>
-                    <SelectItem key={3} text={'Opt-3'} value={'a9da3e97-3916-4834-854c-6bcbc5142aca'}>
-                      Stage Three
-                    </SelectItem>
-                    <SelectItem key={4} text={'Opt-4'} value={'b5951dd9-6bb2-4b63-af20-0707500108ea'}>
-                      Stage Four
-                    </SelectItem>
-                  </Select>
-                )}
-              />
-            </ResponsiveWrapper>
-          </div>
+          <Controller
+            name="sampleDropDown"
+            control={control}
+            render={({ field }) => (
+              <ResponsiveWrapper>
+                <Select {...field} id="sampleDropDown" labelText={t('selectSampleDropDown', '(Drop-Down)')}>
+                  <SelectItem text={t('chooseBaselineWHOStage', 'Choose Baseline WHO Stage')} value="" />
+                  {selectOptions.map((option) => (
+                    <SelectItem key={option.value} text={option.text} value={option.value} />
+                  ))}
+                </Select>
+              </ResponsiveWrapper>
+            )}
+          />
         </section>
 
         <section className={styles.fieldGroup}>
-          <span className={styles.heading}>{t('location', 'Check-Box:')}</span>
-          <Checkbox
-            //checked={value}
-            id="option1"
-            labelText={t('isDeadInputLabel', 'Opt-1')}
-            //onChange={(event, { checked, id }) => setFieldValue(id, checked)}
-          />
-          <Checkbox
-            //checked={value}
-            id="option2"
-            labelText={t('isDeadInputLabel', 'Opt-2')}
-            //onChange={(event, { checked, id }) => setFieldValue(id, checked)}
-          />
-          <div className={styles.pmtctSection}>
-            <Checkbox
-              //checked={value}
-              id="option3"
-              labelText={t('isDeadInputLabel', 'Opt-3')}
-              //onChange={(event, { checked, id }) => setFieldValue(id, checked)}
-            />
-          </div>
-          <div className={styles.pmtctSection}>
-            <Checkbox
-              //checked={value}
-              id="option4"
-              labelText={t('isDeadInputLabel', 'Opt-4')}
-              //onChange={(event, { checked, id }) => setFieldValue(id, checked)}
-            />
-          </div>
-          {/* {values.isDead ? fields.map((field) => <Field key={`death-info-${field}`} name={field} />) : null} */}
+          <span className={styles.heading}>{t('checkBox', 'Check-Box:')}</span>
+          {[1, 2, 3, 4].map((num) => (
+            <Checkbox key={`option${num}`} id={`option${num}`} labelText={t('isDeadInputLabel', `Opt-${num}`)} />
+          ))}
         </section>
+
         <ButtonSet className={styles.buttonSet}>
           <Button
-            onClick={() => closeWorkspaceHandler('template-esm-workspace')}
-            style={{ maxWidth: 'none', width: '50%' }}
-            className={styles.button}
             kind="secondary"
+            onClick={() => closeWorkspace('template-esm-workspace', { ignoreChanges: !isDirty })}
+            className={styles.button}
           >
             {t('discard', 'Discard')}
           </Button>
-          <Button style={{ maxWidth: 'none', width: '50%' }} className={styles.button} kind="primary" type="submit">
-            {encounter ? t('saveAndClose', 'update and close') : t('saveAndClose', 'Save and close')}
+          <Button kind="primary" type="submit" className={styles.button}>
+            {encounter ? t('saveAndClose', 'Update and close') : t('saveAndClose', 'Save and close')}
           </Button>
         </ButtonSet>
       </Stack>
     </Form>
   );
-};
+});
 
 export default TemplateForm;
