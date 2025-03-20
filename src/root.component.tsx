@@ -19,8 +19,7 @@ const Root: React.FC = () => {
   const patient = usePatient();
   return (
     <div className={styles.container}>
-      {/* <h3 className={styles.welcome}>{t('welcomeText', 'Key and Priority Population')}</h3> */}
-      <ClientForm />
+      <ClientForm patientUuid={patient.patientUuid} />
     </div>
   );
 };

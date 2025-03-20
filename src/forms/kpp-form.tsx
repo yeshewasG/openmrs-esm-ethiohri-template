@@ -1,5 +1,5 @@
 // ClientForm.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Form,
   TextInput,
@@ -14,9 +14,11 @@ import {
   Stack,
 } from '@carbon/react';
 import { useForm, Controller } from 'react-hook-form';
-import axios from 'axios';
-import './kpp-form.scss';
-import { closeWorkspace, usePatient } from '@openmrs/esm-framework';
+import styles from './kpp-form.scss';
+import { closeWorkspace, showSnackbar, usePatient, useSession } from '@openmrs/esm-framework';
+import { kppEncounterUuid, kppFormUuid } from '../constants';
+import { fetchLocation, saveEncounter } from '../api/api';
+import { t } from 'i18next';
 
 // OpenMRS API Configuration
 const OPENMRS_API_BASE = 'http://localhost:8080/openmrs/ws/rest/v1'; // Update with your instance URL
@@ -33,7 +35,7 @@ interface ClientFormData {
   grandfatherName?: string;
   clientUID: string;
   mrn?: string;
-  sbbcCompleted: string;
+  sbccCompleted: string;
   reachedWithPackage: string;
   followUpDate: string;
   dateOfBirth: string;
@@ -114,51 +116,57 @@ interface ClientFormData {
 
 // Concept UUIDs (replace with actual UUIDs from your OpenMRS instance)
 const CONCEPTS: { [key in keyof ClientFormData]: string } = {
-  firstName: '162759AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  fatherName: '162760AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  grandfatherName: '162761AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  firstName: '166102AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  fatherName: '166574AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  grandfatherName: '166103AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  //not cnaged
   clientUID: '162762AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   mrn: '162763AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  sbbcCompleted: '162764AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   reachedWithPackage: '162765AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  followUpDate: '162766AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  dateOfBirth: '162767AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  age: '162768AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  sex: '162769AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  riskBehaviors: '162770AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  targetGroup: '162771AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  modalityUsed: '162772AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  hivTestedPreviously: '162773AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  hivTestResult: '162774AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  durationSinceLastTest: '162775AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  hivSelfTestDistributed: '162776AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  hivSelfTestModality: '162777AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  hivSelfTestFor: '162778AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  selfTestResultReported: '162779AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  hivSelfTestResult: '162780AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  conventionalTestDone: '162781AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  conventionalTestDate: '162782AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  conventionalTestResult: '162783AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  linkageToCare: '162784AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  artStarted: '162785AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  artStartDate: '162786AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  uniqueArtNumber: '162787AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  pregnancyTestDone: '162788AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  hcgTestResult: '162789AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  pmtctLinkageDate: '162790AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  prepEligible: '162791AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  prepStarted: '162792AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  prepStartDate: '162793AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  prepNotStartedReasons: '162794AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  prepType: '162795AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  prepFollowUpStatus: '162796AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  prepPreviously: '162797AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  //not changed
+  sbccCompleted: '5a471ad6-9707-43c1-9751-57f3c5bbf59f', //need to change
+
+  followUpDate: 'b8cd8630-56dd-495e-8c84-e36a636febe7',
+  dateOfBirth: '166575AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  age: '1532AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  sex: '1533AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  riskBehaviors: 'beaaba00-bc94-40f4-bb3c-aaa97b23b2c4',
+  targetGroup: 'ca2c04ba-d9bd-4bad-ab03-e57ea9e49016',
+  modalityUsed: '79c5e586-95a0-40af-a34c-852909d6a88d',
+  hivTestedPreviously: 'f4bcd7bc-83c2-40b1-9159-dadb97a83fc8',
+  hivTestResult: '23ef2580-e9e5-4e1b-af9b-584cdd30abc4',
+  durationSinceLastTest: 'd002eb43-bcba-4435-8e0d-b0a6130f09bd',
+  hivSelfTestDistributed: '166464AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  hivSelfTestModality: '2f8edc50-7018-4557-bb23-2bb28d3f4092',
+  hivSelfTestFor: '55d35624-fb83-400b-8cfb-0783e3a0ef65',
+  selfTestResultReported: 'fe83f450-4966-4fc6-8b50-375b6d64f546',
+  hivSelfTestResult: 'e77fb81b-7811-41e4-8f30-af101d9c1c6b',
+  conventionalTestDone: '164401AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  conventionalTestDate: '160082AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  conventionalTestResult: '40d1c129-5373-4005-95b1-409e56db9743',
+  linkageToCare: 'c1bb9738-10aa-4905-bb5d-af4e55b4bb69',
+  artStarted: '95daa4f8-b45d-4dee-b5d0-5f9446d22c19',
+  artStartDate: 'ae329187-6232-4142-aa91-22c85bc8e5b5',
+  uniqueArtNumber: 'c8d98ef1-5e58-417c-a7c3-7f30f76a7155',
+  pregnancyTestDone: 'f562d24b-4c2f-44cd-b894-7ee94ef0078c',
+  hcgTestResult: 'd30935f7-49ab-4984-b9e7-b18391a7efc8',
+  pmtctLinkageDate: '7ff87d3-f1c1-4f00-922a-59a295b23f49',
+  prepEligible: 'f9747f64-d9ad-496d-888d-4a3de096ff8d',
+  prepStarted: '3b4bc0b2-acbb-4fb5-82eb-6f0479915862',
+  prepStartDate: 'a216f62d-5b73-4b99-b96a-37172a0c811e',
+  prepNotStartedReasons: 'e03bd6fa-2733-4ea7-b8b5-fc3221b4ca36',
+  prepType: 'a501dd8a-8aa3-4595-a0be-2d7519504612',
+
+  prepFollowUpStatus: '166535AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  prepPreviously: '740e5d37-2b4e-4a38-907d-f6c2cd828af7',
   prepNotContinuedReasons: '162798AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   prepSideEffects: '162799AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   prepAdherence: '162800AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+
   pepDischargeDate: '162801AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   nextAppointmentDate: '162802AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  stiScreened: '162803AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+
+  stiScreened: 'f461ff79-1873-4f80-bffd-6b3164db7e88',
   syndromicStiDiagnosis: '162804AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   stiManagementProvided: '162805AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   tbScreened: '162806AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
@@ -168,8 +176,11 @@ const CONCEPTS: { [key in keyof ClientFormData]: string } = {
   mentalHealthScreened: '162810AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   mhiSudIdentified: '162811AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   mhiSudLinked: '162812AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  hepBTested: '162813AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  hepBResult: '162814AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+
+  //done
+  hepBTested: '6c6a1af6-f37b-4e40-9dc3-cb69c1e9d96c',
+  hepBResult: '1322AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+
   hepBReferred: '162815AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   hepBVaccination: '162816AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   hepCTested: '162817AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
@@ -187,7 +198,7 @@ const CONCEPTS: { [key in keyof ClientFormData]: string } = {
   gbvServiceProvided: '162829AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   cervicalCancerEligible: '162830AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   cervicalCancerCounselled: '162831AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  cervicalCancerScreened: '162832AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  cervicalCancerScreened: '162832Af461ff79-1873-4f80-bffd-6b3164db7e88AAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   cervicalCancerNotScreenedReason: '162833AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   cervicalCancerResult: '162834AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   cervicalCancerTreatment: '162835AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
@@ -201,7 +212,7 @@ const CONCEPTS: { [key in keyof ClientFormData]: string } = {
 // Validation rules for required fields
 const validationRules = {
   clientUID: { required: 'Client UID is required' },
-  sbbcCompleted: { required: 'SBBC status is required' },
+  sbccCompleted: { required: 'SBBC status is required' },
   reachedWithPackage: { required: 'Service package status is required' },
   followUpDate: { required: 'Follow-up date is required' },
   dateOfBirth: { required: 'Date of birth is required' },
@@ -232,6 +243,10 @@ const validationRules = {
 
 const ClientForm: React.FC = () => {
   const patient = usePatient();
+  const session = useSession();
+  const encounterDate = new Date().toISOString();
+  const [facilityInfo, setFacilityInfo] = useState({ uuid: '', name: '' });
+
   const {
     control,
     handleSubmit,
@@ -240,7 +255,7 @@ const ClientForm: React.FC = () => {
   } = useForm<ClientFormData>({
     defaultValues: {
       clientUID: patient.patientUuid,
-      sbbcCompleted: '',
+      sbccCompleted: '',
       reachedWithPackage: '',
       followUpDate: '',
       dateOfBirth: '',
@@ -273,7 +288,6 @@ const ClientForm: React.FC = () => {
 
   const [submissionStatus, setSubmissionStatus] = useState<string | null>(null);
 
-  // Watch all fields with dependencies
   const watchedFields = {
     hivTestedPreviously: watch('hivTestedPreviously'),
     hivSelfTestDistributed: watch('hivSelfTestDistributed'),
@@ -310,24 +324,42 @@ const ClientForm: React.FC = () => {
     modalityUsed: watch('modalityUsed'),
     couponId: watch('couponId'),
   };
-
+  useEffect(() => {
+    fetchLocation().then(({ data }) => {
+      const facility = data.results.find((element) => element.tags.some((x) => x.display === 'Facility Location'));
+      if (facility) {
+        setFacilityInfo({ uuid: facility.uuid, name: facility.display });
+      }
+    });
+  }, []);
   const createEncounter = async (data: ClientFormData) => {
-    const encounterDate = new Date().toISOString();
-    const encounterPayload = {
+    const payload = {
       encounterDatetime: encounterDate,
+      encounterProviders: [{ provider: session.currentProvider.uuid, encounterRole: session.user.roles }],
+      encounterType: kppEncounterUuid,
+      form: { uuid: kppFormUuid },
+      location: facilityInfo.uuid,
       patient: patient.patientUuid,
-      encounterType: '8d5b2c0c-1390-11e7-93ae-92361f002671', // Replace with "Client Follow-up" UUID
-      location: '8d5b2c44-1390-11e7-93ae-92361f002671', // Replace with location UUID
+      orders: [],
       obs: Object.entries(data)
-        .filter(([_, value]) => value !== '' && value !== undefined && value !== null && value !== 0)
+        .filter(([, value]) => value !== '' && value !== undefined && value !== null && value !== 0)
         .map(([key, value]) => ({
           concept: CONCEPTS[key as keyof ClientFormData],
+          formFieldNamespace: 'rfe-forms',
+          formFieldPath: `rfe-forms-${key}`,
           value: Array.isArray(value) ? value.join(',') : value,
         })),
     };
 
     try {
-      const response = await axios.post(`${OPENMRS_API_BASE}/encounter`, encounterPayload, AUTH_HEADER);
+      const response = await saveEncounter(new AbortController(), payload);
+
+      showSnackbar({
+        isLowContrast: true,
+        title: t('saveEntry', 'Record Saved'),
+        kind: 'success',
+        subtitle: t('transferOutEncounterCreatedSuccessfully', 'A new encounter was created'),
+      });
       setSubmissionStatus('Encounter created successfully');
       return response.data;
     } catch (error) {
@@ -347,7 +379,7 @@ const ClientForm: React.FC = () => {
     closeWorkspace('kpp-form-workspace');
   };
   return (
-    <div className="client-form-container">
+    <div className={styles.form}>
       {submissionStatus && (
         <InlineNotification
           kind={submissionStatus.includes('Error') ? 'error' : 'success'}
@@ -359,7 +391,7 @@ const ClientForm: React.FC = () => {
       <Form onSubmit={handleSubmit(onSubmit)}>
         <div className="form-grid">
           {/* Basic Information */}
-          <Controller
+          {/* <Controller
             name="firstName"
             control={control}
             render={({ field }) => <TextInput id="firstName" labelText="First Name" {...field} />}
@@ -393,15 +425,15 @@ const ClientForm: React.FC = () => {
             name="mrn"
             control={control}
             render={({ field }) => <TextInput id="mrn" labelText="MRN" {...field} />}
-          />
+          /> */}
 
           {/* Service Questions */}
           <Controller
-            name="sbbcCompleted"
+            name="sbccCompleted"
             control={control}
-            rules={validationRules.sbbcCompleted}
+            rules={validationRules.sbccCompleted}
             render={({ field }) => (
-              <Select id="sbbcCompleted" labelText="SBBC Completed *" {...field} invalid={!!errors.sbbcCompleted}>
+              <Select id="sbccCompleted" labelText="SBBC Completed *" {...field} invalid={!!errors.sbccCompleted}>
                 <SelectItem value="" text="Select" />
                 <SelectItem value="yes" text="Yes" />
                 <SelectItem value="no" text="No" />
@@ -442,7 +474,7 @@ const ClientForm: React.FC = () => {
               </DatePicker>
             )}
           />
-          <Controller
+          {/* <Controller
             name="dateOfBirth"
             control={control}
             rules={validationRules.dateOfBirth}
@@ -473,8 +505,7 @@ const ClientForm: React.FC = () => {
             )}
           />
 
-          {/* Demographics and Risk */}
-          <Controller
+           <Controller
             name="sex"
             control={control}
             rules={validationRules.sex}
@@ -485,7 +516,7 @@ const ClientForm: React.FC = () => {
                 <SelectItem value="female" text="Female" />
               </Select>
             )}
-          />
+          /> */}
           <Controller
             name="riskBehaviors"
             control={control}
