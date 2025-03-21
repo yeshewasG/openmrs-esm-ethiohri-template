@@ -124,8 +124,7 @@ const CONCEPTS: { [key in keyof ClientFormData]: string } = {
   mrn: '162763AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   reachedWithPackage: '162765AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   //not changed
-  sbccCompleted: '5a471ad6-9707-43c1-9751-57f3c5bbf59f', //need to change
-
+  sbccCompleted: '9c135d66-ff6f-4fc0-bd22-6ab7ec72faa4',
   followUpDate: 'b8cd8630-56dd-495e-8c84-e36a636febe7',
   dateOfBirth: '166575AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   age: '1532AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
@@ -186,22 +185,21 @@ const CONCEPTS: { [key in keyof ClientFormData]: string } = {
   condomDemo: '408f420c-284e-456c-9c8e-89f18fcc02b0',
   condomsProvided: '159777AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   condomCount: '1f0bb965-e2ec-4f74-a640-9ca0082711d1',
-
-  gbvAssessment: '162826AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  gbvOutcome: '162827AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  gbvLinked: '162828AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  gbvServiceProvided: '162829AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  cervicalCancerEligible: '162830AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  cervicalCancerCounselled: '162831AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  cervicalCancerScreened: '162832Af461ff79-1873-4f80-bffd-6b3164db7e88AAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  cervicalCancerNotScreenedReason: '162833AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  cervicalCancerResult: '162834AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  cervicalCancerTreatment: '162835AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  lastFollowUpOutcome: '162836AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  finalDecision: '162837AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  couponId: '162838AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  couponReturnDate: '162839AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  etbPaid: '162840AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  gbvAssessment: 'b3e4157e-e170-4608-aca5-d832a8d5a4bb',
+  gbvOutcome: '9e730210-9008-48cb-b182-cec8501cd453',
+  gbvLinked: '5fdc49a5-18fd-4817-8270-9e5b4f47c62f',
+  gbvServiceProvided: '202444f5-00b7-42c4-9d8d-87c7fbab5ee7',
+  cervicalCancerEligible: '1b1dc36e-fe65-4f4b-8304-09fbd9c106ad',
+  cervicalCancerCounselled: 'a3998691-d9cc-492b-81f2-7bd28a6e413b',
+  cervicalCancerScreened: 'db2c6647-0f71-414a-9100-8ea9a870fa26',
+  cervicalCancerNotScreenedReason: '650c7f2c-558e-47e0-aaed-035a242771a6',
+  cervicalCancerResult: '01c546b4-e08a-4c0c-82ef-d387cab6bbbf',
+  cervicalCancerTreatment: '3dff2a98-0af9-4a52-b9b8-e958bcfc7329',
+  lastFollowUpOutcome: 'c0a705b5-c77d-4553-84b2-dfaa30444a69',
+  finalDecision: 'f0652b88-d1dd-4ec5-add7-8bdda63b5a8a',
+  couponId: '1fc5d156-10fa-4654-85ba-799039b73671',
+  couponReturnDate: 'a54b4a31-a65d-4dc1-b3b3-df0665470f26',
+  etbPaid: '435bed47-53e7-40a4-8d3e-309e7f977e4e',
 };
 
 // Validation rules for required fields
